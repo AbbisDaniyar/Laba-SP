@@ -2,10 +2,8 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Alert;
 import com.example.demo.model.StatusType;
-import com.example.demo.service.AlertService;
-
+import com.example.demo.service.CachedAlertService;
 import jakarta.validation.Valid;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -15,36 +13,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RestController // Говорим Spring, что это REST контроллер
-@RequestMapping("/api/alerts") // Все методы будут начинаться с /api/alerts
+@RestController
+@RequestMapping("/api/alerts")
 public class AlertController {
 
-    private final AlertService alertService;
+    private final CachedAlertService alertService;
 
-    // Spring автоматически передаст сервис
-    public AlertController(AlertService alertService) {
+    public AlertController(CachedAlertService alertService) {
         this.alertService = alertService;
     }
 
-    // GET /api/alerts - получить все инциденты
     @GetMapping
     public List<Alert> getAllAlerts(@RequestParam(required = false) StatusType status) {
         if (status != null) {
-            return alertService.findByStatus(status); // Фильтрация по статусу
+            return alertService.findByStatus(status);
         }
-        return alertService.findAll(); // Все инциденты
+        return alertService.findAll();
     }
 
-    // GET /api/alerts/{id} - получить инцидент по ID
     @GetMapping("/{id}")
     public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
         return alertService.findById(id)
-                .map(ResponseEntity::ok) // Если найден - возвращаем 200 OK
-                .orElse(ResponseEntity.notFound().build()); // Если нет - 404 Not Found
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // POST /api/alerts - создать новый инцидент
-   @PostMapping
+    @GetMapping("/bus/{busId}")
+    public List<Alert> getAlertsByBus(@PathVariable Long busId) {
+        return alertService.findByBusId(busId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Alert> getAlertsByUser(@PathVariable Long userId) {
+        return alertService.findByAssignedToUserId(userId);
+    }
+
+    @PostMapping
     public ResponseEntity<?> createAlert(@Valid @RequestBody Alert alert, BindingResult result) {
         if (result.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
@@ -58,7 +62,6 @@ public class AlertController {
                 .body(createdAlert);
     }
 
-    // PUT /api/alerts/{id}/status - изменить статус инцидента
     @PutMapping("/{id}/status")
     public ResponseEntity<Alert> updateStatus(@PathVariable Long id, 
                                              @RequestParam StatusType status) {
@@ -70,7 +73,6 @@ public class AlertController {
         }
     }
 
-    // PUT /api/alerts/{id}/assign - назначить инцидент на пользователя
     @PutMapping("/{id}/assign")
     public ResponseEntity<Alert> assignAlert(@PathVariable Long id, 
                                             @RequestParam Long userId) {
@@ -82,12 +84,20 @@ public class AlertController {
         }
     }
 
-    // DELETE /api/alerts/{id} - удалить инцидент
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
-        alertService.deleteById(id);
-        return ResponseEntity.noContent().build(); // 204 No Content
+        try {
+            alertService.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    
+    // Эндпоинт для управления кешем (для администрирования)
+    @PostMapping("/cache/clear")
+    public ResponseEntity<String> clearCache() {
+        alertService.clearAllCache();
+        return ResponseEntity.ok("Кеш успешно очищен");
+    }
 }

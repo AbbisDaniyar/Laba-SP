@@ -12,9 +12,30 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true                 
+        format_sql: true
+        # Настройки для второго уровня кеширования (опционально)
+        # cache.use_second_level_cache: true
+        # cache.region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+    
+  # Настройки кеширования
+  cache:
+    type: simple
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=300s
+
+# Настройки транзакций
+management:
+  endpoints:
+    web:
+      exposure:
+        include: cache,metrics
+  endpoint:
+    cache:
+      enabled: true
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG             
-          
+    org.hibernate.SQL: DEBUG
+    # Логирование кеширования для отладки
+    org.springframework.cache: TRACE
+    com.example.demo.service: DEBUG

@@ -4,11 +4,15 @@ import com.example.demo.exception.AlertNotFoundException;
 import com.example.demo.model.Alert;
 import com.example.demo.model.StatusType;
 import com.example.demo.repository.AlertRepository;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class SimpleAlertService implements AlertService {
 
     private final AlertRepository alertRepository;
