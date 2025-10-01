@@ -3,11 +3,17 @@ package com.example.demo.controller;
 import com.example.demo.model.Alert;
 import com.example.demo.model.StatusType;
 import com.example.demo.service.AlertService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController // Говорим Spring, что это REST контроллер
 @RequestMapping("/api/alerts") // Все методы будут начинаться с /api/alerts
@@ -38,10 +44,16 @@ public class AlertController {
     }
 
     // POST /api/alerts - создать новый инцидент
-    @PostMapping
-    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
+   @PostMapping
+    public ResponseEntity<?> createAlert(@Valid @RequestBody Alert alert, BindingResult result) {
+        if (result.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            result.getFieldErrors().forEach(error -> 
+                errors.put(error.getField(), error.getDefaultMessage()));
+            return ResponseEntity.badRequest().body(errors);
+        }
+        
         Alert createdAlert = alertService.create(alert);
-        // Возвращаем статус 201 Created и ссылку на новый ресурс
         return ResponseEntity.created(URI.create("/api/alerts/" + createdAlert.getId()))
                 .body(createdAlert);
     }
@@ -76,4 +88,6 @@ public class AlertController {
         alertService.deleteById(id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
+
+    
 }
