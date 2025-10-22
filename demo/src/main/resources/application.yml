@@ -33,9 +33,16 @@ management:
     cache:
       enabled: true
 
+jwt:
+  secret: "mySecretKey123456789012345678901234567890"
+  access-cookie-name: "access_token"
+  refresh-cookie-name: "refresh_token"
+
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
     # Логирование кеширования для отладки
     org.springframework.cache: TRACE
     com.example.demo.service: DEBUG
+

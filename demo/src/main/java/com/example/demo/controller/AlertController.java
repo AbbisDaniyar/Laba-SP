@@ -5,6 +5,7 @@ import com.example.demo.model.StatusType;
 import com.example.demo.service.CachedAlertService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class AlertController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public List<Alert> getAllAlerts(@RequestParam(required = false) StatusType status) {
         if (status != null) {
             return alertService.findByStatus(status);
@@ -32,23 +34,15 @@ public class AlertController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
         return alertService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/bus/{busId}")
-    public List<Alert> getAlertsByBus(@PathVariable Long busId) {
-        return alertService.findByBusId(busId);
-    }
-
-    @GetMapping("/user/{userId}")
-    public List<Alert> getAlertsByUser(@PathVariable Long userId) {
-        return alertService.findByAssignedToUserId(userId);
-    }
-
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> createAlert(@Valid @RequestBody Alert alert, BindingResult result) {
         if (result.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
@@ -63,6 +57,7 @@ public class AlertController {
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> updateStatus(@PathVariable Long id, 
                                              @RequestParam StatusType status) {
         try {
@@ -74,6 +69,7 @@ public class AlertController {
     }
 
     @PutMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> assignAlert(@PathVariable Long id, 
                                             @RequestParam Long userId) {
         try {
@@ -85,6 +81,7 @@ public class AlertController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
         try {
             alertService.deleteById(id);
@@ -94,8 +91,8 @@ public class AlertController {
         }
     }
 
-    // Эндпоинт для управления кешем (для администрирования)
     @PostMapping("/cache/clear")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> clearCache() {
         alertService.clearAllCache();
         return ResponseEntity.ok("Кеш успешно очищен");
