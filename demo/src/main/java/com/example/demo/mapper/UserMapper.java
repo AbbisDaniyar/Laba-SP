@@ -12,14 +12,15 @@ public class UserMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                user.getRole().getAuthority(),
-                Collections.emptySet()
+                user.getRole().getAuthority(), // ROLE_ADMIN, ROLE_MANAGER, etc.
+                Collections.emptySet() // Временное решение - пустые permissions
         );
     }
     
     public static User userDtoToUser(UserDto dto) {
         User user = new User();
         user.setUsername(dto.username());
+        user.setPassword(dto.password());
         return user;
     }
     
@@ -27,7 +28,7 @@ public class UserMapper {
         return new UserLoggedDto(
                 user.getUsername(),
                 user.getRole().getAuthority(),
-                Collections.emptySet()
+                Collections.emptySet() // Временное решение
         );
     }
 }

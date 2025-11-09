@@ -13,37 +13,34 @@ import org.springframework.cache.annotation.Cacheable;
 
 
 public interface AlertService {
-    // Получить все
-    @Cacheable(value = "alert", key = "#root.methodName")
+
+    @Cacheable(value = "alerts", unless = "#result.isEmpty()")
     List<Alert> findAll();
     
-    // Найти инциденты по статусу
-    @Cacheable(value = "alert", key = "#status")
+
+    @Cacheable(value = "alertsByStatus", key = "#status.name()")
     List<Alert> findByStatus(StatusType status);
     
-    // Найти инцидент по ID
-    @Cacheable(value = "alert", key = "#id")
+
     Optional<Alert> findById(Long id);
     
-    // Создать новый инцидент
+
     @Transactional
-    @CacheEvict(value = {"alerts"}, allEntries = true)
+    @CacheEvict(value = {"alerts", "alertsByStatus", "alertsByBus", "alertsByUser"}, allEntries = true)
     Alert create(Alert alert);
     
-    // Обновить статус инцидента
+
     @Transactional
-    @CacheEvict(value = {"alerts", "alert"}, allEntries = true)
+    @CacheEvict(value = {"alerts", "alertsByStatus", "alertsByBus", "alertsByUser"}, allEntries = true)
     Alert updateStatus(Long alertId, StatusType newStatus);
     
-    // Назначить инцидент на пользователя
+
     @Transactional
-    @CacheEvict(value = {"alerts", "alert"}, allEntries = true)
+    @CacheEvict(value = {"alerts", "alertsByStatus", "alertsByBus", "alertsByUser"}, allEntries = true)
     Alert assignToUser(Long alertId, Long userId);
     
-    // Удалить инцидент
-    @Transactional
-    @CacheEvict(value = {"alerts", "alert"}, allEntries = true)
-    void deleteById(Long id);
 
-    
+    @Transactional
+    @CacheEvict(value = {"alerts", "alertsByStatus", "alertsByBus", "alertsByUser"}, allEntries = true)
+    void deleteById(Long id);
 }
