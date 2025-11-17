@@ -68,4 +68,12 @@ public class SimpleAlertService implements AlertService {
     public void deleteById(Long id) {
         alertRepository.deleteById(id);
     }
+
+    @Override
+    public Alert addFileToAlert(Long alertId, String filePath) {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new AlertNotFoundException(alertId));
+        alert.setFilePath(filePath);
+        return alertRepository.save(alert);
+    }
 }

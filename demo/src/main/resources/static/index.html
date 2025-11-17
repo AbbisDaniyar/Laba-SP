@@ -149,6 +149,35 @@
         </div>
     </div>
 
+    <!-- Модальное окно для загрузки файлов -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Загрузить файл для инцидента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="uploadAlertId">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Выберите файл (макс. 5MB)</label>
+                        <input type="file" class="form-control" id="fileInput" 
+                            accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx">
+                        <div class="form-text">
+                            Разрешенные форматы: JPG, PNG, GIF, BMP, PDF, DOC, DOCX
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="handleFileUpload()">
+                        <i class="fas fa-upload"></i> Загрузить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
 </body>

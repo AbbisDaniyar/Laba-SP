@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Alert {
+
+    private String filePath;
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

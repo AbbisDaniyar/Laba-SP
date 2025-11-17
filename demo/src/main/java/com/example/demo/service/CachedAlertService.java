@@ -8,6 +8,7 @@ import com.example.demo.specification.AlertSpecification;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Primary
 @Transactional
 public class CachedAlertService implements AlertService {
 
@@ -103,6 +105,20 @@ public class CachedAlertService implements AlertService {
             throw new AlertNotFoundException(id);
         }
         alertRepository.deleteById(id);
+    }
+
+    @Override
+    @Caching(evict = {
+        @CacheEvict(value = "alerts", allEntries = true),
+        @CacheEvict(value = "alertsByStatus", allEntries = true),
+        @CacheEvict(value = "alertsByBus", allEntries = true),
+        @CacheEvict(value = "alertsByUser", allEntries = true)
+    })
+    public Alert addFileToAlert(Long alertId, String filePath) {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new AlertNotFoundException(alertId));
+        alert.setFilePath(filePath);
+        return alertRepository.save(alert);
     }
 
     

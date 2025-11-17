@@ -343,3 +343,141 @@ async function loadAlerts() {
         showLoading(false);
     }
 }
+
+// Добавляем функции для работы с файлами
+async function uploadFile(alertId, file) {
+    if (!file) {
+        showError('Выберите файл для загрузки');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch(`/api/alerts/${alertId}/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showSuccess(result.message);
+            loadAlerts(); // Перезагружаем список
+        } else {
+            showError(result.message || 'Ошибка загрузки файла');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Ошибка при загрузке файла');
+    }
+}
+
+// Добавляем функцию для открытия модального окна загрузки файла
+function openUploadModal(alertId) {
+    document.getElementById('uploadAlertId').value = alertId;
+    document.getElementById('fileInput').value = '';
+    new bootstrap.Modal(document.getElementById('uploadModal')).show();
+}
+
+// Добавляем функцию для обработки загрузки файла
+async function handleFileUpload() {
+    const alertId = document.getElementById('uploadAlertId').value;
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showError('Выберите файл для загрузки');
+        return;
+    }
+
+    // Показываем индикатор загрузки
+    const uploadBtn = document.querySelector('#uploadModal .btn-primary');
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+    uploadBtn.disabled = true;
+
+    await uploadFile(alertId, file);
+
+    // Восстанавливаем кнопку
+    uploadBtn.innerHTML = originalText;
+    uploadBtn.disabled = false;
+    
+    // Закрываем модальное окно
+    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+}
+
+// Обновляем функцию displayAlerts для отображения файлов
+function displayAlerts(alerts) {
+    const container = document.getElementById('alertsTable');
+    
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> Инциденты не найдены
+            </div>
+        `;
+        return;
+    }
+
+    const alertsHtml = alerts.map(alert => `
+        <div class="card mb-3 alert-card status-${alert.status}">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="card-title">
+                            <span class="badge bg-${getStatusBadgeColor(alert.status)}">${getStatusText(alert.status)}</span>
+                            Инцидент #${alert.id}
+                        </h5>
+                        <p class="card-text">
+                            <strong>Автобус:</strong> ${alert.busId} | 
+                            <strong>Тип:</strong> ${getTypeText(alert.type)} |
+                            <strong>Местоположение:</strong> ${alert.location}
+                        </p>
+                        <p class="card-text">${alert.description}</p>
+                        ${alert.filePath ? `
+                            <p class="card-text">
+                                <strong>Прикрепленный файл:</strong> 
+                                <span class="badge bg-info">
+                                    <i class="fas fa-paperclip"></i> ${alert.filePath}
+                                </span>
+                            </p>
+                        ` : ''}
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${formatDateTime(alert.timestamp)}
+                                ${alert.assignedToUserId ? `| <i class="fas fa-user"></i> Назначен на: ${alert.assignedToUserId}` : ''}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group-vertical">
+                            ${alert.status !== 'IN_PROGRESS' ? `
+                                <button class="btn btn-warning btn-sm mb-1" onclick="updateStatus(${alert.id}, 'IN_PROGRESS')">
+                                    <i class="fas fa-play"></i> В работу
+                                </button>
+                            ` : ''}
+                            ${alert.status !== 'RESOLVED' ? `
+                                <button class="btn btn-success btn-sm mb-1" onclick="updateStatus(${alert.id}, 'RESOLVED')">
+                                    <i class="fas fa-check"></i> Решен
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-info btn-sm mb-1" onclick="openAssignModal(${alert.id})">
+                                <i class="fas fa-user-plus"></i> Назначить
+                            </button>
+                            <button class="btn btn-secondary btn-sm mb-1" onclick="openUploadModal(${alert.id})">
+                                <i class="fas fa-upload"></i> Загрузить файл
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAlert(${alert.id})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = alertsHtml;
+}
