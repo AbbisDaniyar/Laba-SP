@@ -25,11 +25,9 @@ public class DemoApplication {
 	                          RoleRepository roleRepository,
 	                          PasswordEncoder passwordEncoder) {
 		return args -> {
-			// Проверяем, есть ли уже пользователи
 			if (userRepository.count() == 0) {
 				System.out.println("=== CREATING TEST DATA ===");
 				
-				// Создаем роли
 				Role adminRole = new Role();
 				adminRole.setName("ADMIN");
 				
@@ -42,7 +40,6 @@ public class DemoApplication {
 				List<Role> savedRoles = roleRepository.saveAll(List.of(adminRole, managerRole, userRole));
 				System.out.println("Roles created: " + savedRoles.size());
 				
-				// Создаем пользователей
 				User admin = new User();
 				admin.setUsername("admin");
 				admin.setPassword(passwordEncoder.encode("admin123"));
@@ -61,7 +58,6 @@ public class DemoApplication {
 				List<User> savedUsers = userRepository.saveAll(List.of(admin, manager, user));
 				System.out.println("Users created: " + savedUsers.size());
 				
-				// Выводим информацию для отладки
 				savedUsers.forEach(u -> {
 					System.out.println("User: " + u.getUsername() + " | Role: " + u.getRole().getAuthority());
 				});

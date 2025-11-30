@@ -12,8 +12,8 @@ public class UserMapper {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                user.getRole().getAuthority(), // ROLE_ADMIN, ROLE_MANAGER, etc.
-                Collections.emptySet() // Временное решение - пустые permissions
+                user.getRole().getAuthority(),
+                Collections.emptySet()
         );
     }
     

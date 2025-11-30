@@ -28,7 +28,6 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
     
-    // ИЗМЕНЕНО: Entity вместо Enum
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
