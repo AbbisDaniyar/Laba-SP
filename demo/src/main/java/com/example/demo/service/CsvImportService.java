@@ -39,6 +39,7 @@ public class CsvImportService {
     public CsvImportResult importAlertsFromCsv(MultipartFile file) {
         List<String> errors = new ArrayList<>();
         List<Alert> validAlerts = new ArrayList<>();
+        List<Long> createdAlertIds = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
@@ -54,39 +55,32 @@ public class CsvImportService {
                 }
             }
 
-            List<Alert> successAlerts = saveValidAlerts(validAlerts, errors);
-            
+            for (Alert alert : validAlerts) {
+                try {
+                    Alert savedAlert = alertService.create(alert);
+                    createdAlertIds.add(savedAlert.getId());
+                    log.info("Успешно сохранен инцидент ID: {}, автобус: {}, тип: {}", 
+                            savedAlert.getId(), savedAlert.getBusId(), savedAlert.getType());
+                } catch (Exception e) {
+                    errors.add("Не удалось сохранить инцидент: автобус " + alert.getBusId() + 
+                              ", тип " + alert.getType() + " - " + e.getMessage());
+                    log.error("Ошибка сохранения инцидента: автобус {}, тип {}", 
+                             alert.getBusId(), alert.getType(), e);
+                }
+            }
+
             return new CsvImportResult(
-                successAlerts.size(),
-                validAlerts.size() - successAlerts.size(),
-                errors
+                createdAlertIds.size(),
+                validAlerts.size() - createdAlertIds.size(),
+                errors,
+                createdAlertIds
             );
 
         } catch (IOException e) {
             log.error("Ошибка при чтении CSV файла", e);
             errors.add("Не удалось прочитать файл: " + e.getMessage());
-            return new CsvImportResult(0, 0, errors);
+            return new CsvImportResult(0, 0, errors, new ArrayList<>());
         }
-    }
-
-    private List<Alert> saveValidAlerts(List<Alert> validAlerts, List<String> errors) {
-        List<Alert> successAlerts = new ArrayList<>();
-        
-        for (Alert alert : validAlerts) {
-            try {
-                Alert savedAlert = alertService.create(alert);
-                successAlerts.add(savedAlert);
-                log.info("Успешно сохранен инцидент: ID автобуса {}, тип: {}", 
-                        alert.getBusId(), alert.getType());
-            } catch (Exception e) {
-                String alertInfo = String.format("ID автобуса: %d, тип: %s", 
-                        alert.getBusId(), alert.getType());
-                errors.add("Не удалось сохранить инцидент: " + alertInfo + " - " + e.getMessage());
-                log.error("Ошибка сохранения инцидента: {}", alertInfo, e);
-            }
-        }
-        
-        return successAlerts;
     }
 
     private Alert processCsvRecord(CSVRecord csvRecord) {
