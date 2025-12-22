@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,12 +21,12 @@ import org.springframework.util.StringUtils;
 
 @Service
 public class FileService {
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
     
     @Value("${upload.path:uploads}")
     private String uploadDir;
     
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
 
     private static final Map<String, List<String>> ALLOWED_TYPES = new HashMap<>();
     static {
@@ -39,13 +41,17 @@ public class FileService {
     }
 
     public String storeFile(MultipartFile file) throws IOException {
+        log.debug("Сохранение файла: {}", file.getOriginalFilename());
+        
         // Проверка пустого файла
         if (file.isEmpty()) {
+            log.warn("Попытка загрузки пустого файла");
             throw new IOException("Файл пустой");
         }
         
         // Проверка размера файла
         if (file.getSize() > MAX_FILE_SIZE) {
+            log.warn("Размер файла превышает 5MB: {} байт", file.getSize());
             throw new IOException("Размер файла превышает 5MB");
         }
         
@@ -54,6 +60,7 @@ public class FileService {
         String fileExtension = getFileExtension(originalFileName).toLowerCase();
         
         if (!ALLOWED_TYPES.containsKey(fileExtension)) {
+            log.warn("Недопустимое расширение файла: {}", fileExtension);
             throw new IOException("Недопустимый тип файла. Разрешены: " + String.join(", ", ALLOWED_TYPES.keySet()));
         }
 
@@ -62,6 +69,7 @@ public class FileService {
         List<String> allowedMimeTypes = ALLOWED_TYPES.get(fileExtension);
         
         if (mimeType == null || !allowedMimeTypes.contains(mimeType.toLowerCase())) {
+            log.warn("Недопустимый MIME тип: {}, ожидался один из: {}", mimeType, allowedMimeTypes);
             throw new IOException("Недопустимый MIME тип. Ожидалось: " + 
                 allowedMimeTypes + ", получено: " + mimeType);
         }
@@ -69,22 +77,24 @@ public class FileService {
         // Проверка "магических чисел" для изображений
         if (fileExtension.matches("jpg|jpeg|png|gif|bmp")) {
             if (!isValidImageFile(file.getBytes())) {
+                log.warn("Файл не является валидным изображением: {}", originalFileName);
                 throw new IOException("Файл не является валидным изображением");
             }
         }
-        
-        // Создание директории если не существует
+
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) {
+            log.info("Создание директории для загрузок: {}", uploadPath);
             Files.createDirectories(uploadPath);
         }
         
-        // Генерация уникального имени файла
         String fileName = UUID.randomUUID().toString() + "." + fileExtension;
         Path targetLocation = uploadPath.resolve(fileName);
         
-        // Копирование файла
+
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        
+        log.info("Файл успешно сохранен: {}, размер: {} байт", fileName, file.getSize());
         
         return fileName;
     }
@@ -94,6 +104,7 @@ public class FileService {
         if (dotIndex > 0 && dotIndex < fileName.length() - 1) {
             return fileName.substring(dotIndex + 1);
         }
+        log.warn("Не удалось определить расширение файла: {}", fileName);
         return "";
     }
     
@@ -127,10 +138,21 @@ public class FileService {
     }
 
     public boolean deleteFile(String fileName) {
+        log.debug("Удаление файла: {}", fileName);
+        
         try {
             Path filePath = Paths.get(uploadDir).resolve(fileName);
-            return Files.deleteIfExists(filePath);
+            boolean deleted = Files.deleteIfExists(filePath);
+            
+            if (deleted) {
+                log.info("Файл успешно удален: {}", fileName);
+            } else {
+                log.warn("Файл не найден для удаления: {}", fileName);
+            }
+            
+            return deleted;
         } catch (IOException e) {
+            log.error("Ошибка удаления файла: {}, ошибка: {}", fileName, e.getMessage(), e);
             return false;
         }
     }

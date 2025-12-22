@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,9 +17,12 @@ import java.util.List;
 
 @SpringBootApplication
 public class DemoApplication {
+    private static final Logger log = LoggerFactory.getLogger(DemoApplication.class);
 
 	public static void main(String[] args) {
+	    log.info("Запуск приложения DemoApplication");
 		SpringApplication.run(DemoApplication.class, args);
+		log.info("Приложение DemoApplication успешно запущено");
 	}
 
 	@Bean
@@ -26,7 +31,7 @@ public class DemoApplication {
 	                          PasswordEncoder passwordEncoder) {
 		return args -> {
 			if (userRepository.count() == 0) {
-				System.out.println("=== CREATING TEST DATA ===");
+				log.info("=== СОЗДАНИЕ ТЕСТОВЫХ ДАННЫХ ===");
 				
 				Role adminRole = new Role();
 				adminRole.setName("ADMIN");
@@ -38,7 +43,7 @@ public class DemoApplication {
 				userRole.setName("USER");
 				
 				List<Role> savedRoles = roleRepository.saveAll(List.of(adminRole, managerRole, userRole));
-				System.out.println("Roles created: " + savedRoles.size());
+				log.info("Создано ролей: {}", savedRoles.size());
 				
 				User admin = new User();
 				admin.setUsername("admin");
@@ -56,16 +61,16 @@ public class DemoApplication {
 				user.setRole(userRole);
 				
 				List<User> savedUsers = userRepository.saveAll(List.of(admin, manager, user));
-				System.out.println("Users created: " + savedUsers.size());
+				log.info("Создано пользователей: {}", savedUsers.size());
 				
 				savedUsers.forEach(u -> {
-					System.out.println("User: " + u.getUsername() + " | Role: " + u.getRole().getAuthority());
+					log.info("Пользователь: {} | Роль: {}", u.getUsername(), u.getRole().getAuthority());
 				});
-				System.out.println("=== TEST DATA CREATION COMPLETE ===");
+				log.info("=== СОЗДАНИЕ ТЕСТОВЫХ ДАННЫХ ЗАВЕРШЕНО ===");
 			} else {
-				System.out.println("=== DATA ALREADY EXISTS ===");
+				log.info("=== ДАННЫЕ УЖЕ СУЩЕСТВУЮТ ===");
 				userRepository.findAll().forEach(u -> {
-					System.out.println("Existing user: " + u.getUsername() + " | Role: " + u.getRole().getAuthority());
+					log.info("Существующий пользователь: {} | Роль: {}", u.getUsername(), u.getRole().getAuthority());
 				});
 			}
 		};
