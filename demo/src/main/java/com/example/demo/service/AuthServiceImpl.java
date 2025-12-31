@@ -7,6 +7,7 @@ import com.example.demo.jwt.JwtTokenProvider;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +34,14 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final TelegramNotificationService telegramNotificationService;
+    private final HttpServletRequest httpServletRequest;
     
     @Override
     public ResponseEntity<LoginResponse> login(LoginRequest loginRequest, String accessToken, String refreshToken) {
         log.info("Обработка входа пользователя: {}", loginRequest.username());
+        
+        String ipAddress = getClientIpAddress();
         
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -48,6 +53,13 @@ public class AuthServiceImpl implements AuthService {
             
             User user = (User) authentication.getPrincipal();
             log.debug("Пользователь аутентифицирован: {}, роль: {}", user.getUsername(), user.getRole().getAuthority());
+            
+            telegramNotificationService.sendAuthNotification(
+                user.getUsername(),
+                user.getRole().getAuthority(),
+                ipAddress,
+                true
+            );
             
             Map<String, Object> claims = new HashMap<>();
             claims.put("role", user.getRole().getAuthority());
@@ -63,7 +75,6 @@ public class AuthServiceImpl implements AuthService {
             log.debug("Токены сгенерированы - access истекает: {}, refresh истекает: {}", 
                      accessTokenObj.getExpiryDate(), refreshTokenObj.getExpiryDate());
             
-
             ResponseCookie accessCookie = ResponseCookie.from("access_token", accessTokenObj.getTokenValue())
                 .httpOnly(true)
                 .secure(false)
@@ -89,10 +100,25 @@ public class AuthServiceImpl implements AuthService {
                 
         } catch (BadCredentialsException e) {
             log.warn("Неверные учетные данные для пользователя: {}", loginRequest.username());
+            
+            telegramNotificationService.sendAuthNotification(
+                loginRequest.username(),
+                "UNKNOWN",
+                ipAddress,
+                false
+            );
+            
             return ResponseEntity.badRequest()
                 .body(new LoginResponse(false, ""));
         } catch (Exception e) {
             log.error("Ошибка входа для пользователя: {}, ошибка: {}", loginRequest.username(), e.getMessage(), e);
+            
+            telegramNotificationService.sendAuthErrorNotification(
+                loginRequest.username(),
+                ipAddress,
+                e.getMessage()
+            );
+            
             return ResponseEntity.badRequest()
                 .body(new LoginResponse(false, ""));
         }
@@ -148,7 +174,21 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public ResponseEntity<LoginResponse> logout(String accessToken, String refreshToken) {
-        log.info("Обработка выхода из системы");
+        log.info("Запрос на выход из системы");
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = "Unknown";
+        
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof User) {
+            User user = (User) authentication.getPrincipal();
+            username = user.getUsername();
+            
+            String ipAddress = getClientIpAddress();
+            telegramNotificationService.sendNotification(
+                "ВЫХОД ИЗ СИСТЕМЫ",
+                String.format("Пользователь %s вышел из системы\nIP адрес: %s", username, ipAddress)
+            );
+        }
         
         ResponseCookie accessCookie = ResponseCookie.from("access_token", "")
             .httpOnly(true)
@@ -166,7 +206,7 @@ public class AuthServiceImpl implements AuthService {
             
         SecurityContextHolder.clearContext();
         
-        log.info("Выход из системы успешен");
+        log.info("Выход из системы успешен для пользователя: {}", username);
         
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
@@ -188,5 +228,30 @@ public class AuthServiceImpl implements AuthService {
         log.debug("Информация о пользователе получена: {}", user.getUsername());
         
         return UserMapper.userToUserLoggedDto(user);
+    }
+    
+    private String getClientIpAddress() {
+        String ipAddress = httpServletRequest.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = httpServletRequest.getHeader("Proxy-Client-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = httpServletRequest.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = httpServletRequest.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = httpServletRequest.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = httpServletRequest.getRemoteAddr();
+        }
+        
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        
+        return ipAddress != null ? ipAddress : "unknown";
     }
 }
