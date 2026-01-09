@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/emergency_db
     username: postgres                    
-    password: Daniyar
+    password: YOUR_DB_PASSWORD_HERE  # ← ЗАМЕНИТЕ
     driver-class-name: org.postgresql.Driver
   servlet:
     multipart:
@@ -11,7 +11,6 @@ spring:
   web:
     resources:
       static-locations: classpath:/static/,file:./uploads/
-      
   
   jpa:
     hibernate:
@@ -26,7 +25,7 @@ spring:
     type: simple
 
 jwt:
-  secret: "bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA="
+  secret: "GENERATE_A_SECURE_RANDOM_STRING_HERE"  # ← ГЕНЕРИРУЙТЕ НОВЫЙ
   access-cookie-name: "access_token"
   refresh-cookie-name: "refresh_token"
 
@@ -42,6 +41,6 @@ upload:
 telegram:
   bot:
     enabled: true
-    token: 8538615695:AAHbVcrJ7nx9LxBNmD2-V9RmmllG20B_vfE
-    chat-id: 5024026116
+    token: "YOUR_TELEGRAM_BOT_TOKEN_HERE"  # ← ЗАМЕНИТЕ
+    chat-id: "YOUR_CHAT_ID_HERE"  # ← ЗАМЕНИТЕ
     bot-username: bus_alert_system_bot
