@@ -2022,10 +2022,9 @@
             const container = document.getElementById('usersContainer');
             const loading = document.getElementById('usersLoading');
             
-            loading.style.display = 'block';
-            
+            loading.style.display = 'block';            
             try {
-                const users = await apiRequest('/users');
+                const users = [];
                 
                 if (!users || users.length === 0) {
                     container.innerHTML = '<p class="empty-state">Нет пользователей</p>';
