@@ -3,182 +3,2401 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управления инцидентами</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>🚨 Система управления инцидентами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        .alert-card {
-            transition: all 0.3s ease;
-            border-left: 4px solid #0d6efd;
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+            --border-color: #dee2e6;
+            --text-color: #333;
+            --card-bg: #ffffff;
         }
-        .alert-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .status-NEW { border-left-color: #dc3545; }
-        .status-IN_PROGRESS { border-left-color: #ffc107; }
-        .status-RESOLVED { border-left-color: #198754; }
-        .loading {
-            display: none;
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Login Screen */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .login-header {
             text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h2 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .login-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        /* App Container */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .app-container.show {
+            display: block;
+        }
+        
+        /* Header */
+        .app-header {
+            background: var(--dark-bg);
+            color: white;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            height: 100%;
+            position: fixed;
+            left: 0;
+            top: 70px;
+            bottom: 0;
+            overflow-y: auto;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            background: #f8f9fa;
+            border-left-color: var(--primary-color);
+        }
+        
+        .nav-link.active {
+            background: #f8f9fa;
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
             padding: 20px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .content-header h2 {
+            color: var(--secondary-color);
+            margin: 0;
+        }
+        
+        .content-header i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        /* Tables */
+        .table {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #219653;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .badge-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: var(--warning-color);
+            color: #333;
+        }
+        
+        .badge-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Alerts (messages) */
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Filters */
+        .filters {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filters-title {
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            list-style: none;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        
+        .page-item {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .page-link {
+            padding: 8px 12px;
+            text-decoration: none;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .page-item.active .page-link {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1200;
+        }
+        
+        .toast {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+            min-width: 300px;
+            max-width: 400px;
+        }
+        
+        .toast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Charts container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .chart canvas {
+            width: 100% !important;
+            height: 250px !important;
+        }
+        
+        /* Alert Cards */
+        .alert-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .alert-item.NEW {
+            border-left-color: var(--danger-color);
+        }
+        
+        .alert-item.IN_PROGRESS {
+            border-left-color: var(--warning-color);
+        }
+        
+        .alert-item.RESOLVED {
+            border-left-color: var(--success-color);
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin: 0;
+            color: var(--secondary-color);
+        }
+        
+        .alert-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .alert-meta i {
+            margin-right: 5px;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid py-4">
-        <!-- Заголовок -->
-        <div class="row mb-4">
-            <div class="col">
-                <h1 class="display-4 text-center">
-                    <i class="fas fa-exclamation-triangle text-warning"></i>
-                    Система управления инцидентами
-                </h1>
-            </div>
-        </div>
-
-        <!-- Форма добавления инцидента -->
-        <div class="row mb-4">
-            <div class="col-md-8 mx-auto">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Добавить новый инцидент</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="alertForm">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="busId" class="form-label">ID автобуса *</label>
-                                        <input type="number" class="form-control" id="busId" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="type" class="form-label">Тип инцидента *</label>
-                                        <select class="form-select" id="type" required>
-                                            <option value="">Выберите тип</option>
-                                            <option value="ACCIDENT">Авария</option>
-                                            <option value="HARD_BRAKING">Резкое торможение</option>
-                                            <option value="BUTTON">Нажатие кнопки</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="location" class="form-label">Местоположение *</label>
-                                        <input type="text" class="form-control" id="location" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="description" class="form-label">Описание *</label>
-                                        <textarea class="form-control" id="description" rows="2" required></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Создать инцидент
-                            </button>
-                        </form>
-                    </div>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="container">
+            <div class="login-container">
+                <div class="login-header">
+                    <i class="fas fa-exclamation-triangle login-icon"></i>
+                    <h2>🚨 ИНЦИДЕНТЫ</h2>
+                    <p>Система управления инцидентами транспорта</p>
                 </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Имя пользователя</label>
+                        <div style="display: flex; gap: 10px;">
+                            <span style="
+                                background: #f8f9fa;
+                                border: 1px solid #dee2e6;
+                                border-right: none;
+                                border-radius: 4px 0 0 4px;
+                                padding: 10px;
+                                display: flex;
+                                align-items: center;
+                            ">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" 
+                                   placeholder="Введите имя пользователя" required
+                                   style="border-radius: 0 4px 4px 0;">
+                        </div>
+                        <div id="usernameError" style="color: #e74c3c; font-size: 0.85rem; margin-top: 5px;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Пароль</label>
+                        <div style="display: flex; gap: 10px;">
+                            <span style="
+                                background: #f8f9fa;
+                                border: 1px solid #dee2e6;
+                                border-right: none;
+                                border-radius: 4px 0 0 4px;
+                                padding: 10px;
+                                display: flex;
+                                align-items: center;
+                            ">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" 
+                                   placeholder="Введите пароль" required
+                                   style="border-radius: 0 4px 4px 0;">
+                            <button type="button" style="
+                                background: #f8f9fa;
+                                border: 1px solid #dee2e6;
+                                border-left: none;
+                                border-radius: 0 4px 4px 0;
+                                padding: 0 15px;
+                                cursor: pointer;
+                            " onclick="togglePassword()">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div id="passwordError" style="color: #e74c3c; font-size: 0.85rem; margin-top: 5px;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%; padding: 12px;">
+                            <span id="loginBtnText">Войти в систему</span>
+                            <span id="loginBtnSpinner" class="spinner" style="display: none; margin: 0;"></span>
+                        </button>
+                    </div>
+                    
+                    <div style="
+                        background: #f8f9fa;
+                        border: 1px solid #dee2e6;
+                        border-radius: 4px;
+                        padding: 15px;
+                        margin-top: 20px;
+                        text-align: center;
+                    ">
+                        <p style="margin: 0; font-size: 0.9rem; color: #666;">
+                            <strong>Тестовые пользователи:</strong><br>
+                            👑 admin / admin123<br>
+                            📊 manager / manager123<br>
+                            👤 user / user123
+                        </p>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- Фильтры и управление -->
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text">Фильтр по статусу:</span>
-                    <select class="form-select" id="statusFilter">
-                        <option value="">Все статусы</option>
-                        <option value="NEW">Новый</option>
-                        <option value="IN_PROGRESS">В работе</option>
-                        <option value="RESOLVED">Решен</option>
-                    </select>
-                    <button class="btn btn-outline-secondary" type="button" onclick="loadAlerts()">
-                        <i class="fas fa-filter"></i> Применить
+    </div>
+    
+    <!-- App Container -->
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container header-content">
+                <div class="logo">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h1>🚨 ИНЦИДЕНТЫ</h1>
+                </div>
+                
+                <div class="user-menu">
+                    <div class="user-info">
+                        <span id="currentUser">Гость</span>
+                        <span class="user-badge" id="userRoleBadge">?</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="showSection('settings')">
+                        <i class="fas fa-user-cog"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
             </div>
-            <div class="col-md-6 text-end">
-                <button class="btn btn-outline-primary" onclick="loadAlerts()">
-                    <i class="fas fa-sync-alt"></i> Обновить
+        </header>
+        
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" onclick="showSection('dashboard')">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Панель управления</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('alerts')">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Инциденты</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('buses')">
+                            <i class="fas fa-bus"></i>
+                            <span>Автобусы</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('users')">
+                            <i class="fas fa-users"></i>
+                            <span>Пользователи</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('reports')">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Отчеты</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('import')">
+                            <i class="fas fa-file-import"></i>
+                            <span>Импорт</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('cache')">
+                            <i class="fas fa-database"></i>
+                            <span>Кэш</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection" class="section-content">
+                    <div class="content-header">
+                        <h2><i class="fas fa-tachometer-alt"></i> Панель управления</h2>
+                        <button class="btn btn-primary" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt"></i> Обновить
+                        </button>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3 id="newAlertsCount">0</h3>
+                            <p>Новых инцидентов</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-tasks"></i>
+                            <h3 id="inProgressCount">0</h3>
+                            <p>В работе</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <h3 id="resolvedCount">0</h3>
+                            <p>Решено</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-bus"></i>
+                            <h3 id="totalBuses">0</h3>
+                            <p>Автобусов</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts -->
+                    <div class="charts-container">
+                        <div class="chart">
+                            <h4>Статистика инцидентов</h4>
+                            <canvas id="alertsChart"></canvas>
+                        </div>
+                        <div class="chart">
+                            <h4>Распределение по типам</h4>
+                            <canvas id="typesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Alerts -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-history"></i> Последние инциденты
+                        </div>
+                        <div class="card-body">
+                            <div id="recentAlerts">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Загрузка данных...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts Section -->
+                <div id="alertsSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-exclamation-circle"></i> Управление инцидентами</h2>
+                        <div>
+                            <button class="btn btn-primary" onclick="showCreateAlertModal()">
+                                <i class="fas fa-plus"></i> Создать инцидент
+                            </button>
+                            <button class="btn btn-success" onclick="exportToCSV()">
+                                <i class="fas fa-file-csv"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="filters">
+                        <h5 class="filters-title">Фильтры и поиск</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">Все статусы</option>
+                                    <option value="NEW">Новый</option>
+                                    <option value="IN_PROGRESS">В работе</option>
+                                    <option value="RESOLVED">Решен</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Тип события</label>
+                                <select class="form-select" id="filterType">
+                                    <option value="">Все типы</option>
+                                    <option value="ACCIDENT">Авария</option>
+                                    <option value="HARD_BRAKING">Резкое торможение</option>
+                                    <option value="BUTTON">Нажатие кнопки</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">ID автобуса</label>
+                                <input type="number" class="form-control" id="filterBusId" placeholder="Любой">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadAlerts()">
+                            <i class="fas fa-search"></i> Найти
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Сбросить
+                        </button>
+                    </div>
+                    
+                    <!-- Alerts List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-list"></i> Инциденты 
+                            <span class="badge badge-primary" id="alertsCount">0</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="alertsLoading" class="loading" style="display: none;">
+                                <div class="spinner"></div>
+                                <p>Загрузка инцидентов...</p>
+                            </div>
+                            <div id="alertsContainer"></div>
+                            <div class="pagination" id="alertsPagination"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Buses Section -->
+                <div id="busesSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-bus"></i> Управление автобусами</h2>
+                        <button class="btn btn-primary" onclick="showCreateBusModal()">
+                            <i class="fas fa-plus"></i> Добавить автобус
+                        </button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="busesLoading" class="loading">
+                                <div class="spinner"></div>
+                                <p>Загрузка автобусов...</p>
+                            </div>
+                            <div id="busesContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Users Section -->
+                <div id="usersSection" class="section-content" style="display: none;">
+        <div class="content-header">
+            <h2><i class="fas fa-users"></i> Управление пользователями</h2>
+            <div class="alert alert-info" style="display: inline-block; margin-left: 20px;">
+                <i class="fas fa-info-circle"></i> Функционал в разработке
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h4><i class="fas fa-tools"></i> Раздел в разработке</h4>
+                    <p>Управление пользователями будет доступно в следующей версии системы.</p>
+                    <p>Текущие тестовые пользователи:</p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>Пароль</th>
+                                <th>Роль</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>admin</code></td>
+                                <td><code>admin123</code></td>
+                                <td><span class="badge badge-primary">👑 Администратор</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>manager</code></td>
+                                <td><code>manager123</code></td>
+                                <td><span class="badge badge-warning">📊 Менеджер</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>user</code></td>
+                                <td><code>user123</code></td>
+                                <td><span class="badge badge-success">👤 Пользователь</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+                
+                <!-- Reports Section -->
+                <div id="reportsSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-chart-bar"></i> Отчеты</h2>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card" onclick="generateDailyReport()" style="cursor: pointer;">
+                            <i class="fas fa-calendar-day"></i>
+                            <h3>Ежедневный</h3>
+                            <p>Отчет за день</p>
+                        </div>
+                        <div class="stat-card" onclick="generateWeeklyReport()" style="cursor: pointer;">
+                            <i class="fas fa-calendar-week"></i>
+                            <h3>Еженедельный</h3>
+                            <p>Отчет за неделю</p>
+                        </div>
+                        <div class="stat-card" onclick="generateMonthlyReport()" style="cursor: pointer;">
+                            <i class="fas fa-calendar-alt"></i>
+                            <h3>Ежемесячный</h3>
+                            <p>Отчет за месяц</p>
+                        </div>
+                        <div class="stat-card" onclick="showCustomReportModal()" style="cursor: pointer;">
+                            <i class="fas fa-cog"></i>
+                            <h3>Пользовательский</h3>
+                            <p>Настройка отчета</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import Section -->
+                <div id="importSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-file-import"></i> Импорт данных</h2>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            Импорт из CSV файла
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Выберите CSV файл</label>
+                                <input type="file" class="form-control" id="csvFile" accept=".csv">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" onclick="importCSV()">
+                                    <i class="fas fa-upload"></i> Импортировать
+                                </button>
+                            </div>
+                            <div id="importResult"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cache Section -->
+                <div id="cacheSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-database"></i> Управление кэшем</h2>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <h4>Тест кэша</h4>
+                                <button class="btn btn-primary" onclick="testCache()">
+                                    <i class="fas fa-bolt"></i> Запустить тест
+                                </button>
+                                <div id="cacheTestResult" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; font-family: monospace;"></div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 30px;">
+                                <h4>Очистка кэша</h4>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Внимание! Очистка кэша может временно снизить производительность системы.
+                                </div>
+                                <button class="btn btn-danger" onclick="clearCache()">
+                                    <i class="fas fa-trash"></i> Очистить кэш
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Section -->
+                <div id="settingsSection" class="section-content" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-user-cog"></i> Настройки профиля</h2>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="userProfile">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Загрузка профиля...</p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px;">
+                                <h4>Смена пароля</h4>
+                                <div class="form-group">
+                                    <label class="form-label">Текущий пароль</label>
+                                    <input type="password" class="form-control" id="currentPassword">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Новый пароль</label>
+                                    <input type="password" class="form-control" id="newPassword">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Подтверждение пароля</label>
+                                    <input type="password" class="form-control" id="confirmPassword">
+                                </div>
+                                <button class="btn btn-primary" onclick="changePassword()">
+                                    <i class="fas fa-key"></i> Сменить пароль
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Create Alert Modal -->
+    <div id="createAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Создать инцидент
+                </h3>
+                <button class="modal-close" onclick="hideModal('createAlertModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">ID автобуса *</label>
+                    <input type="number" class="form-control" id="alertBusId" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Тип инцидента *</label>
+                    <select class="form-select" id="alertType" required>
+                        <option value="">Выберите тип</option>
+                        <option value="ACCIDENT">Авария</option>
+                        <option value="HARD_BRAKING">Резкое торможение</option>
+                        <option value="BUTTON">Нажатие кнопки</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Местоположение *</label>
+                    <input type="text" class="form-control" id="alertLocation" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание *</label>
+                    <textarea class="form-control" id="alertDescription" rows="4" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideModal('createAlertModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="createAlert()">
+                    <i class="fas fa-save"></i> Создать
                 </button>
             </div>
         </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
-        <!-- Таблица инцидентов -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-list"></i> Список инцидентов</h5>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+        const API_BASE_URL = 'http://localhost:8080/api';
+        let currentUser = null;
+        let currentRole = null;
+        let charts = {};
+        let currentPage = 1;
+        const alertsPerPage = 10;
+        
+        // ==================== УТИЛИТЫ ====================
+        function showToast(message, type = 'info') {
+            const toastId = 'toast-' + Date.now();
+            const icons = {
+                success: 'fa-check-circle',
+                danger: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const colors = {
+                success: '#27ae60',
+                danger: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.id = toastId;
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <h4 class="toast-title">
+                        <i class="fas ${icons[type]}" style="color: ${colors[type]}; margin-right: 10px;"></i>
+                        Уведомление
+                    </h4>
+                    <button class="toast-close" onclick="document.getElementById('${toastId}').remove()">&times;</button>
+                </div>
+                <div style="padding: 15px;">
+                    ${message}
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                const element = document.getElementById(toastId);
+                if (element) element.remove();
+            }, 5000);
+        }
+        
+        async function apiRequest(url, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(API_BASE_URL + url, options);
+                
+                if (response.status === 401) {
+                    showToast('Сессия истекла', 'warning');
+                    logout();
+                    throw new Error('Unauthorized');
+                }
+                
+                if (response.status === 403) {
+                    showToast('Недостаточно прав', 'danger');
+                    throw new Error('Forbidden');
+                }
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || `HTTP ${response.status}`);
+                }
+                
+                if (response.status === 204) return null;
+                
+                return await response.json();
+                
+            } catch (error) {
+                if (!['Unauthorized', 'Forbidden'].includes(error.message)) {
+                    showToast(`Ошибка: ${error.message}`, 'danger');
+                }
+                throw error;
+            }
+        }
+        
+        function getRoleBadge(role) {
+            const roles = {
+                'ROLE_ADMIN': '👑 Админ',
+                'ROLE_MANAGER': '📊 Менеджер',
+                'ROLE_USER': '👤 Пользователь'
+            };
+            return roles[role] || role;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function getStatusName(status) {
+            const statuses = {
+                'NEW': 'Новый',
+                'IN_PROGRESS': 'В работе',
+                'RESOLVED': 'Решен'
+            };
+            return statuses[status] || status;
+        }
+        
+        function getEventTypeName(type) {
+            const types = {
+                'ACCIDENT': 'Авария',
+                'HARD_BRAKING': 'Резкое торможение',
+                'BUTTON': 'Нажатие кнопки'
+            };
+            return types[type] || type;
+        }
+        
+        // ==================== АУТЕНТИФИКАЦИЯ ====================
+        async function login(event) {
+            if (event) event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showToast('Заполните все поля', 'warning');
+                return;
+            }
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            loginBtn.disabled = true;
+            loginBtnText.textContent = 'Вход...';
+            loginBtn.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    currentUser = username;
+                    currentRole = data.roles || 'USER';
+                    
+                    document.getElementById('currentUser').textContent = username;
+                    document.getElementById('userRoleBadge').textContent = getRoleBadge(currentRole);
+                    
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').classList.add('show');
+                    
+                    showToast(`Добро пожаловать, ${username}!`, 'success');
+                    
+                    initializeApp();
+                    
+                } else {
+                    const error = await response.text();
+                    showToast('Неверное имя пользователя или пароль', 'danger');
+                }
+                
+            } catch (error) {
+                showToast('Ошибка соединения с сервером', 'danger');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Войти в систему';
+                loginBtn.innerHTML = '<span id="loginBtnText">Войти в систему</span>';
+            }
+        }
+        
+        async function logout() {
+            try {
+                await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                // Игнорируем ошибки при выходе
+            }
+            
+            currentUser = null;
+            currentRole = null;
+            
+            document.getElementById('appContainer').classList.remove('show');
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('loginForm').reset();
+            
+            showToast('Вы вышли из системы', 'info');
+        }
+        
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = event.target.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        function initializeApp() {
+            loadDashboard();
+            checkAuth();
+        }
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/info`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const userInfo = await response.json();
+                    currentUser = userInfo.username;
+                    currentRole = userInfo.role;
+                    
+                    document.getElementById('currentUser').textContent = currentUser;
+                    document.getElementById('userRoleBadge').textContent = getRoleBadge(currentRole);
+                }
+            } catch (error) {
+                // Не авторизован
+            }
+        }
+        
+        // ==================== НАВИГАЦИЯ ====================
+        function showSection(sectionId) {
+            // Обновляем навигацию
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Показываем нужную секцию
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(sectionId + 'Section').style.display = 'block';
+            
+            // Загружаем данные секции
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'alerts':
+                    loadAlerts();
+                    break;
+                case 'buses':
+                    loadBuses();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'cache':
+                    break;
+                case 'settings':
+                    loadUserProfile();
+                    break;
+            }
+        }
+        
+        // ==================== МОДАЛЬНЫЕ ОКНА ====================
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+        
+        // ==================== ДАШБОРД ====================
+        async function loadDashboard() {
+            try {
+                const [alerts, buses] = await Promise.all([
+                    apiRequest('/alerts'),
+                    apiRequest('/buses')
+                ]);
+                
+                updateDashboardStats(alerts, buses);
+                createCharts(alerts);
+                loadRecentAlerts(alerts.slice(0, 10));
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        function refreshDashboard() {
+            showToast('Обновление данных...', 'info');
+            loadDashboard();
+        }
+        
+        function updateDashboardStats(alerts, buses) {
+            const newCount = alerts.filter(a => a.status === 'NEW').length;
+            const inProgressCount = alerts.filter(a => a.status === 'IN_PROGRESS').length;
+            const resolvedCount = alerts.filter(a => a.status === 'RESOLVED').length;
+            
+            document.getElementById('newAlertsCount').textContent = newCount;
+            document.getElementById('inProgressCount').textContent = inProgressCount;
+            document.getElementById('resolvedCount').textContent = resolvedCount;
+            document.getElementById('totalBuses').textContent = buses.length;
+        }
+        
+        function createCharts(alerts) {
+            // Line chart for alerts over time
+            const alertsCtx = document.getElementById('alertsChart');
+            if (alertsCtx) {
+                const alertsByDate = {};
+                alerts.forEach(alert => {
+                    const date = alert.timestamp.split('T')[0];
+                    alertsByDate[date] = (alertsByDate[date] || 0) + 1;
+                });
+                
+                const dates = Object.keys(alertsByDate).sort();
+                const counts = dates.map(date => alertsByDate[date]);
+                
+                if (charts.alertsChart) charts.alertsChart.destroy();
+                
+                charts.alertsChart = new Chart(alertsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Количество инцидентов',
+                            data: counts,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: true
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Pie chart for alert types
+            const typesCtx = document.getElementById('typesChart');
+            if (typesCtx) {
+                const typeCounts = {
+                    ACCIDENT: 0,
+                    HARD_BRAKING: 0,
+                    BUTTON: 0
+                };
+                
+                alerts.forEach(alert => {
+                    typeCounts[alert.type] = (typeCounts[alert.type] || 0) + 1;
+                });
+                
+                if (charts.typesChart) charts.typesChart.destroy();
+                
+                charts.typesChart = new Chart(typesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Авария', 'Торможение', 'Кнопка'],
+                        datasets: [{
+                            data: [typeCounts.ACCIDENT, typeCounts.HARD_BRAKING, typeCounts.BUTTON],
+                            backgroundColor: ['#e74c3c', '#f39c12', '#27ae60']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function loadRecentAlerts(alerts = null) {
+            const container = document.getElementById('recentAlerts');
+            
+            if (!alerts) {
+                container.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка...</p>
                     </div>
-                    <div class="card-body">
-                        <div id="loading" class="loading">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p class="mt-2">Загрузка данных...</p>
+                `;
+                return;
+            }
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p class="empty-state">Нет инцидентов</p>';
+                return;
+            }
+            
+            let html = '<table class="table">';
+            html += `
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Автобус</th>
+                        <th>Тип</th>
+                        <th>Статус</th>
+                        <th>Время</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            alerts.forEach(alert => {
+                const statusClass = alert.status === 'NEW' ? 'badge-danger' : 
+                                 alert.status === 'IN_PROGRESS' ? 'badge-warning' : 'badge-success';
+                const statusBadge = `<span class="badge ${statusClass}">${getStatusName(alert.status)}</span>`;
+                
+                html += `
+                    <tr>
+                        <td><strong>#${alert.id}</strong></td>
+                        <td>🚌 ${alert.busId}</td>
+                        <td>${getEventTypeName(alert.type)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${formatDate(alert.timestamp)}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="viewAlertDetails(${alert.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // ==================== ИНЦИДЕНТЫ ====================
+        async function loadAlerts(page = 1) {
+            currentPage = page;
+            
+            const container = document.getElementById('alertsContainer');
+            const loading = document.getElementById('alertsLoading');
+            
+            container.innerHTML = '';
+            loading.style.display = 'block';
+            
+            try {
+                const status = document.getElementById('filterStatus').value;
+                const type = document.getElementById('filterType').value;
+                const busId = document.getElementById('filterBusId').value;
+                
+                let url = '/alerts';
+                const params = [];
+                
+                if (status) params.push(`status=${status}`);
+                // Note: API doesn't support type filter, need to filter client-side
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                let alerts = await apiRequest(url);
+                
+                // Client-side filtering for type and busId
+                if (type) {
+                    alerts = alerts.filter(a => a.type === type);
+                }
+                if (busId) {
+                    alerts = alerts.filter(a => a.busId == busId);
+                }
+                
+                displayAlerts(alerts);
+                document.getElementById('alertsCount').textContent = alerts.length;
+                
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Ошибка загрузки данных: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox fa-2x"></i>
+                        <h4>Нет инцидентов</h4>
+                        <p>Создайте первый инцидент или измените фильтры</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            alerts.forEach(alert => {
+                const statusClass = alert.status === 'NEW' ? 'badge-danger' : 
+                                 alert.status === 'IN_PROGRESS' ? 'badge-warning' : 'badge-success';
+                const statusBadge = `<span class="badge ${statusClass}">${getStatusName(alert.status)}</span>`;
+                
+                html += `
+                    <div class="alert-item ${alert.status}">
+                        <div class="alert-header">
+                            <h4 class="alert-title">Инцидент #${alert.id}</h4>
+                            ${statusBadge}
                         </div>
-                        <div id="alertsTable"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно для назначения пользователя -->
-    <div class="modal fade" id="assignModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Назначить инцидент</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="assignAlertId">
-                    <div class="mb-3">
-                        <label for="userId" class="form-label">ID пользователя</label>
-                        <input type="number" class="form-control" id="userId" placeholder="Введите ID пользователя">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="assignAlert()">Назначить</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно для загрузки файлов -->
-    <div class="modal fade" id="uploadModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Загрузить файл для инцидента</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="uploadAlertId">
-                    <div class="mb-3">
-                        <label for="fileInput" class="form-label">Выберите файл (макс. 5MB)</label>
-                        <input type="file" class="form-control" id="fileInput" 
-                            accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx">
-                        <div class="form-text">
-                            Разрешенные форматы: JPG, PNG, GIF, BMP, PDF, DOC, DOCX
+                        <div class="alert-meta">
+                            <span><i class="fas fa-bus"></i> Автобус: #${alert.busId}</span>
+                            <span><i class="fas fa-tag"></i> ${getEventTypeName(alert.type)}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${alert.location}</span>
+                            <span><i class="fas fa-clock"></i> ${formatDate(alert.timestamp)}</span>
+                        </div>
+                        <p>${alert.description}</p>
+                        <div class="alert-actions">
+                            <button class="btn btn-primary btn-sm" onclick="viewAlertDetails(${alert.id})">
+                                <i class="fas fa-eye"></i> Просмотр
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="editAlert(${alert.id})">
+                                <i class="fas fa-edit"></i> Редактировать
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="assignAlertPrompt(${alert.id})">
+                                <i class="fas fa-user-check"></i> Назначить
+                            </button>
+                            ${alert.status !== 'RESOLVED' ? `
+                            <button class="btn btn-success btn-sm" onclick="updateAlertStatus(${alert.id}, 'RESOLVED')">
+                                <i class="fas fa-check"></i> Решить
+                            </button>
+                            ` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteAlert(${alert.id})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="handleFileUpload()">
-                        <i class="fas fa-upload"></i> Загрузить
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="app.js"></script>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Добавляем пагинацию если нужно
+            // createPagination(alerts.length);
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterBusId').value = '';
+            loadAlerts();
+        }
+        
+        function showCreateAlertModal() {
+            showModal('createAlertModal');
+        }
+        
+        async function createAlert() {
+            const alertData = {
+                busId: parseInt(document.getElementById('alertBusId').value),
+                type: document.getElementById('alertType').value,
+                location: document.getElementById('alertLocation').value,
+                description: document.getElementById('alertDescription').value
+            };
+            
+            try {
+                await apiRequest('/alerts', 'POST', alertData);
+                showToast('Инцидент создан успешно!', 'success');
+                
+                hideModal('createAlertModal');
+                document.getElementById('alertBusId').value = '';
+                document.getElementById('alertType').value = '';
+                document.getElementById('alertLocation').value = '';
+                document.getElementById('alertDescription').value = '';
+                
+                loadAlerts();
+                loadDashboard();
+                
+            } catch (error) {
+                showToast('Ошибка создания инцидента: ' + error.message, 'danger');
+            }
+        }
+        
+        async function deleteAlert(id) {
+            if (!confirm('Вы уверены, что хотите удалить этот инцидент?')) {
+                return;
+            }
+            
+            try {
+                await apiRequest(`/alerts/${id}`, 'DELETE');
+                showToast('Инцидент удален', 'success');
+                loadAlerts();
+                loadDashboard();
+            } catch (error) {
+                showToast('Ошибка удаления инцидента', 'danger');
+            }
+        }
+        
+        async function updateAlertStatus(id, status) {
+            try {
+                await apiRequest(`/alerts/${id}/status?status=${status}`, 'PUT');
+                showToast('Статус обновлен', 'success');
+                loadAlerts();
+                loadDashboard();
+            } catch (error) {
+                showToast('Ошибка обновления статуса', 'danger');
+            }
+        }
+        
+        // ==================== АВТОБУСЫ ====================
+        async function loadBuses() {
+            const container = document.getElementById('busesContainer');
+            const loading = document.getElementById('busesLoading');
+            
+            loading.style.display = 'block';
+            
+            try {
+                const buses = await apiRequest('/buses');
+                
+                if (buses.length === 0) {
+                    container.innerHTML = '<p class="empty-state">Нет автобусов</p>';
+                    return;
+                }
+                
+                let html = '<table class="table">';
+                html += `
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Модель</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                buses.forEach(bus => {
+                    html += `
+                        <tr>
+                            <td>${bus.id}</td>
+                            <td>${bus.model}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editBus(${bus.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteBus(${bus.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Ошибка загрузки автобусов
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // ==================== ПОЛЬЗОВАТЕЛИ ====================
+        async function loadUsers() {
+            const container = document.getElementById('usersContainer');
+            const loading = document.getElementById('usersLoading');
+            
+            loading.style.display = 'block';
+            
+            try {
+                const users = await apiRequest('/users');
+                
+                if (!users || users.length === 0) {
+                    container.innerHTML = '<p class="empty-state">Нет пользователей</p>';
+                    return;
+                }
+                
+                let html = '<table class="table">';
+                html += `
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя пользователя</th>
+                            <th>Роль</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                users.forEach(user => {
+                    html += `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${getRoleBadge(user.role)}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editUser(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Ошибка загрузки пользователей
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // ==================== ОТЧЕТЫ ====================
+        async function generateDailyReport() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/reports/pdf-modern/daily`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'daily_report.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showToast('Отчет успешно сгенерирован', 'success');
+                } else {
+                    throw new Error('Ошибка генерации отчета');
+                }
+            } catch (error) {
+                showToast('Ошибка генерации отчета: ' + error.message, 'danger');
+            }
+        }
+        
+        async function generateWeeklyReport() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/reports/pdf-modern/weekly`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'weekly_report.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showToast('Отчет успешно сгенерирован', 'success');
+                } else {
+                    throw new Error('Ошибка генерации отчета');
+                }
+            } catch (error) {
+                showToast('Ошибка генерации отчета: ' + error.message, 'danger');
+            }
+        }
+        
+        async function generateMonthlyReport() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/reports/pdf-modern/monthly`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'monthly_report.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showToast('Отчет успешно сгенерирован', 'success');
+                } else {
+                    throw new Error('Ошибка генерации отчета');
+                }
+            } catch (error) {
+                showToast('Ошибка генерации отчета: ' + error.message, 'danger');
+            }
+        }
+        
+        // ==================== ИМПОРТ ====================
+        async function importCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const resultDiv = document.getElementById('importResult');
+            
+            if (!fileInput.files.length) {
+                showToast('Выберите файл для импорта', 'warning');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Импорт...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/alerts/import-csv`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    let html = '<div class="alert alert-success">';
+                    html += `<p><i class="fas fa-check-circle"></i> Импорт завершен!</p>`;
+                    html += `<p>Успешно: ${result.successCount}</p>`;
+                    html += `<p>Неудачно: ${result.failedCount}</p>`;
+                    
+                    if (result.errors && result.errors.length > 0) {
+                        html += '<p>Ошибки:</p><ul>';
+                        result.errors.forEach(error => {
+                            html += `<li>${error}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                    
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                    
+                    showToast('Импорт завершен успешно', 'success');
+                    loadAlerts();
+                    loadDashboard();
+                    
+                } else {
+                    throw new Error('Ошибка импорта');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Ошибка импорта: ${error.message}
+                    </div>
+                `;
+                showToast('Ошибка импорта', 'danger');
+            }
+        }
+        
+        // ==================== КЭШ ====================
+        async function testCache() {
+            const resultDiv = document.getElementById('cacheTestResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Тестирование...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/alerts/cache-test`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const result = await response.text();
+                    resultDiv.innerHTML = `<pre>${result}</pre>`;
+                    showToast('Тест кэша завершен', 'success');
+                } else {
+                    throw new Error('Ошибка тестирования кэша');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+                showToast('Ошибка тестирования кэша', 'danger');
+            }
+        }
+        
+        async function clearCache() {
+            if (!confirm('Вы уверены, что хотите очистить кэш?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/alerts/cache/clear`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    showToast('Кэш успешно очищен', 'success');
+                } else {
+                    throw new Error('Ошибка очистки кэша');
+                }
+            } catch (error) {
+                showToast('Ошибка очистки кэша: ' + error.message, 'danger');
+            }
+        }
+        
+        // ==================== НАСТРОЙКИ ====================
+        async function loadUserProfile() {
+            const container = document.getElementById('userProfile');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/info`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const userInfo = await response.json();
+                    
+                    const html = `
+                        <div>
+                            <h4>Информация о профиле</h4>
+                            <p><strong>Имя пользователя:</strong> ${userInfo.username}</p>
+                            <p><strong>Роль:</strong> ${getRoleBadge(userInfo.role)}</p>
+                        </div>
+                    `;
+                    
+                    container.innerHTML = html;
+                } else {
+                    throw new Error('Не удалось загрузить профиль');
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Ошибка загрузки профиля
+                    </div>
+                `;
+            }
+        }
+        
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Заполните все поля', 'warning');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Пароли не совпадают', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/change_password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                        confirmPassword
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast('Пароль успешно изменен', 'success');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    const error = await response.text();
+                    throw new Error(error);
+                }
+            } catch (error) {
+                showToast('Ошибка смены пароля: ' + error.message, 'danger');
+            }
+        }
+        
+        // ==================== ЭКСПОРТ ====================
+        function exportToCSV() {
+            showToast('Экспорт в CSV будет реализован в следующей версии', 'info');
+        }
+        
+        // ==================== ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginForm').addEventListener('submit', login);
+            checkAuth();
+        });
+        
+        // Дополнительные функции (заглушки)
+        function viewAlertDetails(id) {
+            showToast(`Просмотр инцидента #${id}`, 'info');
+        }
+        
+        function editAlert(id) {
+            showToast(`Редактирование инцидента #${id}`, 'info');
+        }
+        
+        function assignAlertPrompt(id) {
+            const userId = prompt('Введите ID пользователя для назначения:');
+            if (userId) {
+                assignAlert(id, userId);
+            }
+        }
+        
+        async function assignAlert(alertId, userId) {
+            try {
+                await apiRequest(`/alerts/${alertId}/assign?userId=${userId}`, 'PUT');
+                showToast('Инцидент назначен', 'success');
+                loadAlerts();
+            } catch (error) {
+                showToast('Ошибка назначения инцидента', 'danger');
+            }
+        }
+        
+        function showCreateBusModal() {
+            showToast('Создание автобуса', 'info');
+        }
+        
+        function editBus(id) {
+            showToast(`Редактирование автобуса #${id}`, 'info');
+        }
+        
+        async function deleteBus(id) {
+            if (!confirm('Удалить автобус?')) return;
+            try {
+                await apiRequest(`/buses/${id}`, 'DELETE');
+                showToast('Автобус удален', 'success');
+                loadBuses();
+            } catch (error) {
+                showToast('Ошибка удаления автобуса', 'danger');
+            }
+        }
+        
+        function showCreateUserModal() {
+            showToast('Создание пользователя', 'info');
+        }
+        
+        function editUser(id) {
+            showToast(`Редактирование пользователя #${id}`, 'info');
+        }
+        
+        function showCustomReportModal() {
+            showToast('Настройка пользовательского отчета', 'info');
+        }
+    </script>
 </body>
 </html>
