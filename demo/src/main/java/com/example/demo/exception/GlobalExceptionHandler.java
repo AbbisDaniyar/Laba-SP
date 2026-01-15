@@ -16,6 +16,15 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(BusNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleBusNotFound(BusNotFoundException ex) {
+        log.warn("Автобус не найден: {}", ex.getMessage());
+        
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
     @ExceptionHandler(AlertNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleAlertNotFound(AlertNotFoundException ex) {
         log.warn("Инцидент не найден: {}", ex.getMessage());
