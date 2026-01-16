@@ -1,12 +1,14 @@
-# docker-compose.yml
+# docker-compose.yml - максимально простая версия
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15-alpine
     container_name: emergency-postgres
     environment:
-      POSTGRES_DB: emergency_db
+      POSTGRES_DB: emergencydb
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Daniyar
+      POSTGRES_PASSWORD: postgres123
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +17,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
     restart: unless-stopped
 
   app:
@@ -24,35 +27,18 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Профиль Spring
       SPRING_PROFILES_ACTIVE: docker
-      
-      # Настройки базы данных
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/emergency_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/emergencydb
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: Daniyar
-      
-      # JVM настройки
+      SPRING_DATASOURCE_PASSWORD: postgres123
       JAVA_OPTS: >
         -Xmx512m 
         -Xms256m 
-        -Dspring.profiles.active=docker 
-        -Dfile.upload-dir=/uploads
-      
-    volumes:
-      - ./uploads:/uploads
-      
+        -Dspring.profiles.active=docker
     depends_on:
       postgres:
         condition: service_healthy
-        
     restart: unless-stopped
-    
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   postgres_data:
