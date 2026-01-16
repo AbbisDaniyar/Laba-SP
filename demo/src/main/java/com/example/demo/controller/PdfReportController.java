@@ -21,7 +21,7 @@ import java.util.Map;
  * Предоставляет API для создания ежедневных, еженедельных, ежемесячных и пользовательских отчетов.
  */
 @Slf4j
-@Tag(name = "Modern PDF Reports", description = "Современная генерация PDF отчетов")
+@Tag(name = "PDF Отчеты", description = "Современная генерация PDF отчетов")
 @RestController
 @RequestMapping("/api/reports/pdf-modern")
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class PdfReportController {
      * @param endDate конечная дата для отчета (опционально)
      * @return PDF-файл с ежедневным отчетом
      */
-    @Operation(summary = "Ежедневный отчет")
+    @Operation(summary = "Генерация ежедневного отчета")
     @GetMapping("/daily")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<byte[]> generateDailyReport(
@@ -65,7 +65,7 @@ public class PdfReportController {
      * @param endDate конечная дата для отчета (опционально)
      * @return PDF-файл с еженедельным отчетом
      */
-    @Operation(summary = "Еженедельный отчет")
+    @Operation(summary = "Генерация еженедельного отчета")
     @GetMapping("/weekly")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<byte[]> generateWeeklyReport(
@@ -93,7 +93,7 @@ public class PdfReportController {
      * @param endDate конечная дата для отчета (опционально)
      * @return PDF-файл с ежемесячным отчетом
      */
-    @Operation(summary = "Ежемесячный отчет")
+    @Operation(summary = "Генерация ежемесячного отчета")
     @GetMapping("/monthly")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<byte[]> generateMonthlyReport(
@@ -120,7 +120,7 @@ public class PdfReportController {
      * @param request параметры для пользовательского отчета
      * @return PDF-файл с пользовательским отчетом
      */
-    @Operation(summary = "Пользовательский отчет")
+    @Operation(summary = "Генерация пользовательского отчета")
     @PostMapping("/custom")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<byte[]> generateCustomReport(@RequestBody ReportRequest request) {
@@ -140,7 +140,7 @@ public class PdfReportController {
      *
      * @return PDF-файл с тестовым отчетом
      */
-    @Operation(summary = "Тестовый отчет")
+    @Operation(summary = "Генерация тестового отчета")
     @GetMapping("/test")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<byte[]> generateTestReport() {
@@ -162,7 +162,7 @@ public class PdfReportController {
      * @param endDate конечная дата для получения статистики
      * @return карта с данными статистики
      */
-    @Operation(summary = "Статистика")
+    @Operation(summary = "Получение статистики по отчетам")
     @GetMapping("/statistics")
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<Map<String, Object>> getStatistics(

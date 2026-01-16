@@ -13,12 +13,16 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.dto.CsvImportResult;
 import com.example.demo.service.CsvImportService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Контроллер для импорта данных инцидентов из CSV-файлов.
  * Обрабатывает загрузку CSV-файлов и их последующую обработку для создания инцидентов.
  */
+@Tag(name = "Импорт CSV", description = "API для импорта инцидентов из CSV-файлов")
 @RestController
 @RequestMapping("/api/alerts")
 @RequiredArgsConstructor
@@ -34,9 +38,10 @@ public class CsvImportController {
      * @param file CSV-файл для импорта
      * @return результат импорта с информацией об успешных и неудачных операциях
      */
+    @Operation(summary = "Импорт инцидентов из CSV", description = "Импортирует инциденты из CSV-файла")
     @PostMapping(value = "/import-csv", consumes = "multipart/form-data")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<CsvImportResult> importCsv(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<CsvImportResult> importCsv(@Parameter(description = "CSV-файл для импорта") @RequestParam("file") MultipartFile file) {
         log.info("Запрос импорта CSV - имя файла: {}, размер: {} байт",
                 file.getOriginalFilename(), file.getSize());
 

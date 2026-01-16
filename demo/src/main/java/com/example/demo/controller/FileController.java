@@ -15,6 +15,9 @@ import com.example.demo.service.FileService;
 import com.example.demo.model.Alert;
 import com.example.demo.service.AlertService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -23,6 +26,7 @@ import java.io.IOException;
  * Контроллер для загрузки файлов к инцидентам.
  * Обрабатывает запросы на загрузку файлов и привязку их к существующим инцидентам.
  */
+@Tag(name = "Файловая загрузка", description = "API для загрузки файлов к инцидентам")
 @RestController
 @RequiredArgsConstructor
 public class FileController {
@@ -39,13 +43,14 @@ public class FileController {
      * @param id ID инцидента, к которому привязывается файл
      * @return результат загрузки файла
      */
+    @Operation(summary = "Загрузка файла к инциденту", description = "Загружает файл и привязывает его к инциденту")
     @PostMapping(value = "/api/alerts/{id}/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> uploadFile(
-            @RequestParam("file") MultipartFile file,
-            @PathVariable Long id) {
+            @Parameter(description = "Файл для загрузки") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "ID инцидента, к которому привязывается файл") @PathVariable Long id) {
 
         log.debug("Запрос загрузки файла - ID инцидента: {}, имя файла: {}, размер: {} байт",
                  id, file.getOriginalFilename(), file.getSize());

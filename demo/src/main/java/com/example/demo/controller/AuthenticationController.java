@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
  * Контроллер для аутентификации и управления сессиями пользователей.
  * Обрабатывает операции входа, выхода, обновления токенов и изменения пароля.
  */
-@Tag(name = "Authentication", description = "API для аутентификации и управления сессиями")
+@Tag(name = "Аутентификация", description = "API для аутентификации и управления сессиями пользователей")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -52,7 +52,7 @@ public class AuthenticationController {
      * @param loginRequest данные для входа (логин и пароль)
      * @return ответ с JWT-токенами при успешной аутентификации
      */
-    @Operation(summary = "Логин пользователя", description = "Аутентификация пользователя по логину и паролю. Возвращает JWT-токены.")
+    @Operation(summary = "Вход пользователя в систему", description = "Аутентификация пользователя по логину и паролю. Возвращает JWT-токены.")
     @ApiResponse(responseCode = "200", description = "Успешная аутентификация")
     @ApiResponse(responseCode = "400", description = "Неверные учетные данные")
     @PostMapping("/login")
@@ -82,7 +82,7 @@ public class AuthenticationController {
      * @param refreshToken refresh токен для обновления
      * @return новый JWT-токен при успешном обновлении
      */
-    @Operation(summary = "Обновление токена", description = "Генерация нового access-токена по refresh-токену")
+    @Operation(summary = "Обновление токена доступа", description = "Генерация нового access-токена по refresh-токену")
     @ApiResponse(responseCode = "200", description = "Токен успешно обновлен")
     @ApiResponse(responseCode = "400", description = "Недействительный refresh-токен")
     @PostMapping("/refresh")
@@ -114,7 +114,7 @@ public class AuthenticationController {
      * @param refreshToken refresh токен для инвалидации
      * @return ответ об успешном выходе
      */
-    @Operation(summary = "Выход из системы", description = "Инвалидация текущих JWT-токенов")
+    @Operation(summary = "Выход пользователя из системы", description = "Инвалидация текущих JWT-токенов")
     @ApiResponse(responseCode = "200", description = "Сессия завершена")
     @PostMapping("/logout")
     public ResponseEntity<LoginResponse> logout(
@@ -137,7 +137,7 @@ public class AuthenticationController {
      *
      * @return информация о пользователе
      */
-    @Operation(summary = "Информация о пользователе", description = "Получение данных текущего аутентифицированного пользователя")
+    @Operation(summary = "Получение информации о пользователе", description = "Получение данных текущего аутентифицированного пользователя")
     @ApiResponse(responseCode = "200", description = "Данные пользователя")
     @ApiResponse(responseCode = "401", description = "Требуется аутентификация")
     @PreAuthorize("isAuthenticated()")
@@ -161,7 +161,7 @@ public class AuthenticationController {
      * @param request данные для смены пароля (старый, новый и подтверждение)
      * @return результат операции смены пароля
      */
-    @Operation(summary = "Смена пароля", description = "Изменение пароля текущего пользователя")
+    @Operation(summary = "Смена пароля пользователя", description = "Изменение пароля текущего пользователя")
     @PutMapping("/change_password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request) {

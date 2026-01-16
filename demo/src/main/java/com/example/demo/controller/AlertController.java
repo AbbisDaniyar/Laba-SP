@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.model.Alert;
 import com.example.demo.model.StatusType;
 import com.example.demo.service.CachedAlertService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import java.util.Optional;
  * Контроллер для управления инцидентами (уведомлениями).
  * Обрабатывает HTTP-запросы, связанные с созданием, получением, обновлением и удалением инцидентов.
  */
+@Tag(name = "Инциденты", description = "API для управления инцидентами и уведомлениями")
 @RestController
 @RequestMapping("/api/alerts")
 public class AlertController {
@@ -39,6 +42,7 @@ public class AlertController {
      * @param status статус инцидентов для фильтрации (опционально)
      * @return список инцидентов
      */
+    @Operation(summary = "Получить все инциденты", description = "Получает список всех инцидентов с возможностью фильтрации по статусу")
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public List<Alert> getAllAlerts(@RequestParam(required = false) StatusType status) {
@@ -63,6 +67,7 @@ public class AlertController {
      * @param id ID инцидента
      * @return инцидент или 404, если не найден
      */
+    @Operation(summary = "Получить инцидент по идентификатору", description = "Получает инцидент по его ID")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> getAlertById(@PathVariable Long id) {
@@ -86,6 +91,7 @@ public class AlertController {
      * @param busId ID автобуса
      * @return список инцидентов для указанного автобуса
      */
+    @Operation(summary = "Получить инциденты по автобусу", description = "Получает список инцидентов по ID автобуса")
     @GetMapping("/bus/{busId}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public List<Alert> getAlertsByBus(@PathVariable Long busId) {
@@ -99,6 +105,7 @@ public class AlertController {
      * @param userId ID пользователя
      * @return список инцидентов, назначенных пользователю
      */
+    @Operation(summary = "Получить инциденты по пользователю", description = "Получает список инцидентов, назначенных пользователю")
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'MANAGER')")
     public List<Alert> getAlertsByUser(@PathVariable Long userId) {
@@ -111,6 +118,7 @@ public class AlertController {
      *
      * @return результаты теста кэширования
      */
+    @Operation(summary = "Тест производительности кэша", description = "Тестирует производительность кэширования инцидентов")
     @GetMapping("/cache-test")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<String> cacheTest() {
@@ -147,6 +155,7 @@ public class AlertController {
      * @param result результат валидации
      * @return созданный инцидент или ошибки валидации
      */
+    @Operation(summary = "Создать новый инцидент", description = "Создает новый инцидент в системе")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> createAlert(@Valid @RequestBody Alert alert, BindingResult result) {
@@ -182,6 +191,7 @@ public class AlertController {
      * @param status новый статус инцидента
      * @return обновленный инцидент или 404, если не найден
      */
+    @Operation(summary = "Обновить статус инцидента", description = "Обновляет статус инцидента")
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> updateStatus(@PathVariable Long id,
@@ -207,6 +217,7 @@ public class AlertController {
      * @param userId ID пользователя, которому назначается инцидент
      * @return обновленный инцидент или 404, если не найден
      */
+    @Operation(summary = "Назначить инцидент пользователю", description = "Назначает инцидент пользователю")
     @PutMapping("/{id}/assign")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Alert> assignAlert(@PathVariable Long id,
@@ -231,6 +242,7 @@ public class AlertController {
      * @param id ID инцидента для удаления
      * @return 204 No Content при успешном удалении или 404, если не найден
      */
+    @Operation(summary = "Удалить инцидент", description = "Удаляет инцидент по ID")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
@@ -252,6 +264,7 @@ public class AlertController {
      *
      * @return сообщение об успешной очистке кэша или ошибке
      */
+    @Operation(summary = "Очистить кэш инцидентов", description = "Очищает кэш инцидентов")
     @PostMapping("/cache/clear")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> clearCache() {

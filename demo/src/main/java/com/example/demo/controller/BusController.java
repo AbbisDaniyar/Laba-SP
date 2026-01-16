@@ -19,7 +19,7 @@ import java.util.List;
  * Обрабатывает HTTP-запросы, связанные с созданием, получением, обновлением и удалением автобусов.
  */
 @Slf4j
-@Tag(name = "Bus", description = "API для управления автобусами")
+@Tag(name = "Автобусы", description = "API для управления автобусами")
 @RestController
 @RequestMapping("/api/buses")
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class BusController {
      *
      * @return список автобусов
      */
-    @Operation(summary = "Получить все автобусы")
+    @Operation(summary = "Получить список всех автобусов")
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<List<BusDto>> getAllBuses() {
@@ -50,7 +50,7 @@ public class BusController {
      * @param id ID автобуса
      * @return автобус или 404, если не найден
      */
-    @Operation(summary = "Получить автобус по ID")
+    @Operation(summary = "Получить автобус по идентификатору")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<BusDto> getBusById(@PathVariable Long id) {
@@ -67,7 +67,7 @@ public class BusController {
      * @param model модель автобуса для поиска
      * @return список автобусов, соответствующих критериям поиска
      */
-    @Operation(summary = "Поиск автобусов по модели")
+    @Operation(summary = "Поиск автобусов по модели транспорта")
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
     public ResponseEntity<List<BusDto>> searchBuses(@RequestParam String model) {
@@ -84,7 +84,7 @@ public class BusController {
      * @param busDto данные автобуса для создания
      * @return созданный автобус с 201 Created
      */
-    @Operation(summary = "Создать новый автобус")
+    @Operation(summary = "Создать новый автобус в системе")
     @PostMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<BusDto> createBus(@Valid @RequestBody BusDto busDto) {
@@ -104,7 +104,7 @@ public class BusController {
      * @param busDto новые данные автобуса
      * @return обновленный автобус
      */
-    @Operation(summary = "Обновить автобус")
+    @Operation(summary = "Обновить информацию об автобусе")
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public ResponseEntity<BusDto> updateBus(@PathVariable Long id,
@@ -122,7 +122,7 @@ public class BusController {
      * @param id ID автобуса для удаления
      * @return 204 No Content при успешном удалении
      */
-    @Operation(summary = "Удалить автобус")
+    @Operation(summary = "Удалить автобус из системы")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteBus(@PathVariable Long id) {

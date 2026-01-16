@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -18,6 +21,7 @@ import java.nio.file.Paths;
  * Контроллер для предоставления доступа к загруженным файлам.
  * Обрабатывает запросы на скачивание файлов из директории загрузок.
  */
+@Tag(name = "Файловый доступ", description = "API для скачивания загруженных файлов")
 @RestController
 public class FileAccessController {
     private static final Logger log = LoggerFactory.getLogger(FileAccessController.class);
@@ -30,8 +34,9 @@ public class FileAccessController {
      * @param filename имя файла для скачивания
      * @return ресурс файла для скачивания или 404, если файл не найден
      */
+    @Operation(summary = "Скачивание файла", description = "Обрабатывает запрос на скачивание файла по имени файла")
     @GetMapping("/files/{filename:.+}")
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> serveFile(@Parameter(description = "Имя файла для скачивания") @PathVariable String filename) {
         log.debug("Запрос скачивания файла: {}", filename);
 
         try {
