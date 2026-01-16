@@ -15,14 +15,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Сервис для управления автобусами.
+ * Предоставляет методы для выполнения операций CRUD над автобусами,
+ * а также методы для поиска и проверки существования автобусов.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class BusService {
-    
+
     private final BusRepository busRepository;
     
+    /**
+     * Получает список всех автобусов.
+     * Результат кэшируется с использованием Spring Cache.
+     *
+     * @return Список объектов BusDto, представляющих все автобусы
+     */
     @Cacheable(value = "buses")
     @Transactional(readOnly = true)
     public List<BusDto> getAllBuses() {
@@ -31,7 +42,15 @@ public class BusService {
         log.info("Найдено {} автобусов", buses.size());
         return buses.stream().map(BusMapper::toDto).toList();
     }
-    
+
+    /**
+     * Получает автобус по его ID.
+     * Результат кэшируется с использованием Spring Cache.
+     *
+     * @param id Уникальный идентификатор автобуса
+     * @return Объект BusDto, представляющий автобус с указанным ID
+     * @throws BusNotFoundException Если автобус с указанным ID не найден
+     */
     @Cacheable(value = "bus", key = "#id")
     @Transactional(readOnly = true)
     public BusDto getBusById(Long id) {
@@ -43,7 +62,13 @@ public class BusService {
                 });
         return BusMapper.toDto(bus);
     }
-    
+
+    /**
+     * Поиск автобусов по модели (частичное совпадение, без учета регистра).
+     *
+     * @param model Модель автобуса для поиска
+     * @return Список объектов BusDto, представляющих автобусы с указанной моделью
+     */
     @Transactional(readOnly = true)
     public List<BusDto> searchBusesByModel(String model) {
         log.debug("Поиск автобусов по модели: {}", model);
@@ -51,62 +76,91 @@ public class BusService {
         log.info("Найдено {} автобусов по модели: {}", buses.size(), model);
         return buses.stream().map(BusMapper::toDto).toList();
     }
-    
+
+    /**
+     * Создает новый автобус.
+     * После создания очищает соответствующие кэши.
+     *
+     * @param busDto Объект BusDto с данными нового автобуса
+     * @return Объект BusDto, представляющий созданный автобус
+     */
     @Caching(evict = {
         @CacheEvict(value = "buses", allEntries = true),
         @CacheEvict(value = "bus", key = "#result.id()")
     })
     public BusDto createBus(BusDto busDto) {
         log.info("Создание нового автобуса: модель={}", busDto.model());
-        
+
         Bus bus = new Bus();
         bus.setModel(busDto.model());
-        
+
         Bus savedBus = busRepository.save(bus);
-        log.info("Автобус успешно создан: id={}, модель={}", 
+        log.info("Автобус успешно создан: id={}, модель={}",
                 savedBus.getId(), savedBus.getModel());
-        
+
         return BusMapper.toDto(savedBus);
     }
-    
+
+    /**
+     * Обновляет существующий автобус.
+     * После обновления очищает соответствующие кэши.
+     *
+     * @param id Уникальный идентификатор автобуса для обновления
+     * @param busDto Объект BusDto с новыми данными автобуса
+     * @return Объект BusDto, представляющий обновленный автобус
+     * @throws BusNotFoundException Если автобус с указанным ID не найден
+     */
     @Caching(evict = {
         @CacheEvict(value = "buses", allEntries = true),
         @CacheEvict(value = "bus", key = "#id")
     })
     public BusDto updateBus(Long id, BusDto busDto) {
         log.info("Обновление автобуса: id={}", id);
-        
+
         Bus bus = busRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Автобус не найден для обновления: id={}", id);
                     return new BusNotFoundException(id);
                 });
-        
+
         bus.setModel(busDto.model());
-        
+
         Bus updatedBus = busRepository.save(bus);
-        log.info("Автобус успешно обновлен: id={}, модель={}", 
+        log.info("Автобус успешно обновлен: id={}, модель={}",
                 updatedBus.getId(), updatedBus.getModel());
-        
+
         return BusMapper.toDto(updatedBus);
     }
-    
+
+    /**
+     * Удаляет автобус по его ID.
+     * После удаления очищает соответствующие кэши.
+     *
+     * @param id Уникальный идентификатор автобуса для удаления
+     * @throws BusNotFoundException Если автобус с указанным ID не найден
+     */
     @Caching(evict = {
         @CacheEvict(value = "buses", allEntries = true),
         @CacheEvict(value = "bus", key = "#id")
     })
     public void deleteBus(Long id) {
         log.info("Удаление автобуса: id={}", id);
-        
+
         if (!busRepository.existsById(id)) {
             log.warn("Автобус не найден для удаления: id={}", id);
             throw new BusNotFoundException(id);
         }
-        
+
         busRepository.deleteById(id);
         log.info("Автобус успешно удален: id={}", id);
     }
-    
+
+    /**
+     * Проверяет существование автобуса по модели.
+     *
+     * @param model Модель автобуса для проверки
+     * @return true если автобус с указанной моделью существует, иначе false
+     */
     @Transactional(readOnly = true)
     public boolean busExists(String model) {
         log.debug("Проверка существования автобуса: модель={}", model);

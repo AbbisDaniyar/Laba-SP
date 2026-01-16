@@ -14,15 +14,25 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Контроллер для управления автобусами.
+ * Обрабатывает HTTP-запросы, связанные с созданием, получением, обновлением и удалением автобусов.
+ */
 @Slf4j
 @Tag(name = "Bus", description = "API для управления автобусами")
 @RestController
 @RequestMapping("/api/buses")
 @RequiredArgsConstructor
 public class BusController {
-    
+
     private final BusService busService;
-    
+
+    /**
+     * Получает список всех автобусов.
+     * Доступно пользователям с ролью USER, MANAGER или ADMIN.
+     *
+     * @return список автобусов
+     */
     @Operation(summary = "Получить все автобусы")
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
@@ -32,7 +42,14 @@ public class BusController {
         log.info("Возвращено {} автобусов", buses.size());
         return ResponseEntity.ok(buses);
     }
-    
+
+    /**
+     * Получает автобус по его ID.
+     * Доступно пользователям с ролью USER, MANAGER или ADMIN.
+     *
+     * @param id ID автобуса
+     * @return автобус или 404, если не найден
+     */
     @Operation(summary = "Получить автобус по ID")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
@@ -42,7 +59,14 @@ public class BusController {
         log.info("Найден автобус: id={}, модель={}", bus.id(), bus.model());
         return ResponseEntity.ok(bus);
     }
-    
+
+    /**
+     * Поиск автобусов по модели.
+     * Доступно пользователям с ролью USER, MANAGER или ADMIN.
+     *
+     * @param model модель автобуса для поиска
+     * @return список автобусов, соответствующих критериям поиска
+     */
     @Operation(summary = "Поиск автобусов по модели")
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
@@ -52,7 +76,14 @@ public class BusController {
         log.info("Найдено {} автобусов по модели '{}'", buses.size(), model);
         return ResponseEntity.ok(buses);
     }
-    
+
+    /**
+     * Создает новый автобус.
+     * Доступно пользователям с ролью MANAGER или ADMIN.
+     *
+     * @param busDto данные автобуса для создания
+     * @return созданный автобус с 201 Created
+     */
     @Operation(summary = "Создать новый автобус")
     @PostMapping
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
@@ -64,18 +95,33 @@ public class BusController {
                 .created(URI.create("/api/buses/" + createdBus.id()))
                 .body(createdBus);
     }
-    
+
+    /**
+     * Обновляет информацию об автобусе.
+     * Доступно пользователям с ролью MANAGER или ADMIN.
+     *
+     * @param id ID автобуса для обновления
+     * @param busDto новые данные автобуса
+     * @return обновленный автобус
+     */
     @Operation(summary = "Обновить автобус")
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
-    public ResponseEntity<BusDto> updateBus(@PathVariable Long id, 
+    public ResponseEntity<BusDto> updateBus(@PathVariable Long id,
                                            @Valid @RequestBody BusDto busDto) {
         log.debug("PUT /api/buses/{} - обновление автобуса", id);
         BusDto updatedBus = busService.updateBus(id, busDto);
         log.info("Автобус обновлен: id={}, модель={}", updatedBus.id(), updatedBus.model());
         return ResponseEntity.ok(updatedBus);
     }
-    
+
+    /**
+     * Удаляет автобус по ID.
+     * Доступно только пользователям с ролью ADMIN.
+     *
+     * @param id ID автобуса для удаления
+     * @return 204 No Content при успешном удалении
+     */
     @Operation(summary = "Удалить автобус")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

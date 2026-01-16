@@ -23,24 +23,39 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Фильтр для аутентификации по JWT токену.
+ * Извлекает JWT токен из cookie, проверяет его валидность и устанавливает
+ * аутентификацию пользователя в контексте безопасности Spring Security.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
-    
-    @Value("${jwt.access-cookie-name:access_token}")
-    private String accessTokenCookieName;
-    
-    private final JwtTokenProvider tokenProvider;
-    private final UserDetailsServiceImpl userDetailsService;
 
+    @Value("${jwt.access-cookie-name:access_token}")
+    private String accessTokenCookieName; // Имя cookie для access токена
+
+    private final JwtTokenProvider tokenProvider; // Провайдер для работы с JWT токенами
+    private final UserDetailsServiceImpl userDetailsService; // Сервис для загрузки данных пользователя
+
+    /**
+     * Метод фильтрации запросов. Извлекает JWT токен из cookie, проверяет его валидность
+     * и устанавливает аутентификацию пользователя, если токен действителен.
+     *
+     * @param request HTTP запрос
+     * @param response HTTP ответ
+     * @param filterChain цепочка фильтров
+     * @throws ServletException в случае ошибки сервлета
+     * @throws IOException в случае ошибки ввода-вывода
+     */
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, 
-    @NonNull HttpServletResponse response, 
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+    @NonNull HttpServletResponse response,
     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        log.debug("JWT фильтр обрабатывает запрос: {} {}", 
+        log.debug("JWT фильтр обрабатывает запрос: {} {}",
                  request.getMethod(), request.getRequestURI());
-        
+
         String accessToken = getJwtFromCookie(request);
 
         if(accessToken == null) {
@@ -64,7 +79,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         log.debug("Валидный JWT токен для пользователя: {}", username);
-        
+
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -77,9 +92,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             .buildDetails(request));
             SecurityContextHolder.getContext()
             .setAuthentication(authenticationToken);
-            
+
             log.debug("Аутентификация установлена для пользователя: {}", username);
-            
+
         } catch (UsernameNotFoundException e) {
             log.warn("Пользователь не найден для валидного токена: {}", username);
         } catch (Exception e) {
@@ -89,20 +104,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Извлекает JWT токен из cookie запроса.
+     *
+     * @param request HTTP запрос
+     * @return JWT токен из cookie или null, если токен не найден
+     */
     private String getJwtFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
 
         if(cookies == null) {
             return null;
         }
-        
+
         for (Cookie cookie : cookies) {
             if (accessTokenCookieName.equals(cookie.getName())) {
                 log.trace("Найден access токен cookie");
                 return cookie.getValue();
             }
         }
-        
+
         return null;
     }
 }

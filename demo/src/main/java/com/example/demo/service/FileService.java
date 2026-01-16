@@ -19,13 +19,17 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
+/**
+ * Сервис для работы с файлами.
+ * Предоставляет методы для загрузки, хранения и удаления файлов.
+ */
 @Service
 public class FileService {
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
-    
+
     @Value("${upload.path:uploads}")
     private String uploadDir;
-    
+
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private static final Map<String, List<String>> ALLOWED_TYPES = new HashMap<>();
@@ -40,25 +44,33 @@ public class FileService {
         ALLOWED_TYPES.put("docx", Arrays.asList("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
     }
 
+    /**
+     * Сохраняет загруженный файл на сервере.
+     * Выполняет проверки: пустой файл, размер файла, расширение, MIME-тип и валидность изображения.
+     *
+     * @param file Загружаемый файл
+     * @return Имя сохраненного файла
+     * @throws IOException Если произошла ошибка при сохранении файла или файл не прошел проверки
+     */
     public String storeFile(MultipartFile file) throws IOException {
         log.debug("Сохранение файла: {}", file.getOriginalFilename());
-        
+
         // Проверка пустого файла
         if (file.isEmpty()) {
             log.warn("Попытка загрузки пустого файла");
             throw new IOException("Файл пустой");
         }
-        
+
         // Проверка размера файла
         if (file.getSize() > MAX_FILE_SIZE) {
             log.warn("Размер файла превышает 5MB: {} байт", file.getSize());
             throw new IOException("Размер файла превышает 5MB");
         }
-        
+
         // Проверка расширения файла
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         String fileExtension = getFileExtension(originalFileName).toLowerCase();
-        
+
         if (!ALLOWED_TYPES.containsKey(fileExtension)) {
             log.warn("Недопустимое расширение файла: {}", fileExtension);
             throw new IOException("Недопустимый тип файла. Разрешены: " + String.join(", ", ALLOWED_TYPES.keySet()));
@@ -67,10 +79,10 @@ public class FileService {
         // Проверка MIME типа
         String mimeType = file.getContentType();
         List<String> allowedMimeTypes = ALLOWED_TYPES.get(fileExtension);
-        
+
         if (mimeType == null || !allowedMimeTypes.contains(mimeType.toLowerCase())) {
             log.warn("Недопустимый MIME тип: {}, ожидался один из: {}", mimeType, allowedMimeTypes);
-            throw new IOException("Недопустимый MIME тип. Ожидалось: " + 
+            throw new IOException("Недопустимый MIME тип. Ожидалось: " +
                 allowedMimeTypes + ", получено: " + mimeType);
         }
 
@@ -87,18 +99,24 @@ public class FileService {
             log.info("Создание директории для загрузок: {}", uploadPath);
             Files.createDirectories(uploadPath);
         }
-        
+
         String fileName = UUID.randomUUID().toString() + "." + fileExtension;
         Path targetLocation = uploadPath.resolve(fileName);
-        
+
 
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        
+
         log.info("Файл успешно сохранен: {}, размер: {} байт", fileName, file.getSize());
-        
+
         return fileName;
     }
-    
+
+    /**
+     * Извлекает расширение файла из его имени.
+     *
+     * @param fileName Имя файла
+     * @return Расширение файла или пустая строка, если расширение не найдено
+     */
     private String getFileExtension(String fileName) {
         int dotIndex = fileName.lastIndexOf(".");
         if (dotIndex > 0 && dotIndex < fileName.length() - 1) {
@@ -107,49 +125,61 @@ public class FileService {
         log.warn("Не удалось определить расширение файла: {}", fileName);
         return "";
     }
-    
+
+    /**
+     * Проверяет валидность изображения по "магическим числам" в начале файла.
+     *
+     * @param fileBytes Байты файла изображения
+     * @return true если изображение валидно, иначе false
+     */
     private boolean isValidImageFile(byte[] fileBytes) {
         if (fileBytes.length < 4) return false;
-        
+
         // PNG
-        if (fileBytes[0] == (byte) 0x89 && fileBytes[1] == (byte) 0x50 && 
+        if (fileBytes[0] == (byte) 0x89 && fileBytes[1] == (byte) 0x50 &&
             fileBytes[2] == (byte) 0x4E && fileBytes[3] == (byte) 0x47) {
             return true;
         }
-        
+
         // JPEG
-        if (fileBytes[0] == (byte) 0xFF && fileBytes[1] == (byte) 0xD8 && 
+        if (fileBytes[0] == (byte) 0xFF && fileBytes[1] == (byte) 0xD8 &&
             fileBytes[2] == (byte) 0xFF) {
             return true;
         }
-        
+
         // GIF
-        if (fileBytes[0] == (byte) 0x47 && fileBytes[1] == (byte) 0x49 && 
+        if (fileBytes[0] == (byte) 0x47 && fileBytes[1] == (byte) 0x49 &&
             fileBytes[2] == (byte) 0x46) {
             return true;
         }
-        
+
         // BMP
         if (fileBytes[0] == (byte) 0x42 && fileBytes[1] == (byte) 0x4D) {
             return true;
         }
-        
+
         return false;
     }
 
+    /**
+     * Удаляет файл по его имени.
+     *
+     * @param fileName Имя файла для удаления
+     * @return true если файл успешно удален, иначе false
+     */
     public boolean deleteFile(String fileName) {
         log.debug("Удаление файла: {}", fileName);
-        
+
         try {
             Path filePath = Paths.get(uploadDir).resolve(fileName);
             boolean deleted = Files.deleteIfExists(filePath);
-            
+
             if (deleted) {
                 log.info("Файл успешно удален: {}", fileName);
             } else {
                 log.warn("Файл не найден для удаления: {}", fileName);
             }
-            
+
             return deleted;
         } catch (IOException e) {
             log.error("Ошибка удаления файла: {}, ошибка: {}", fileName, e.getMessage(), e);

@@ -3,9 +3,13 @@ package com.example.demo.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+/**
+ * Конфигурационный класс для управления транзакциями в приложении.
+ * Включает поддержку аннотаций @Transactional для управления транзакциями.
+ */
 @Configuration
 @EnableTransactionManagement
 public class TransactionConfig {
-    // Transaction management is enabled by Spring Boot automatically
-    // This configuration class explicitly enables it for clarity
+    // Управление транзакциями включается автоматически в Spring Boot
+    // Этот класс конфигурации явно включает его для ясности
 }

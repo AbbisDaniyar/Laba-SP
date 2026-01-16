@@ -1,5 +1,11 @@
 package com.example.demo.model;
 
+/**
+ * Перечисление статусов инцидентов.
+ * Определяет возможные статусы, в которых может находиться инцидент.
+ */
 public enum StatusType {
-    NEW, IN_PROGRESS, RESOLVED
+    NEW,         // Новый инцидент
+    IN_PROGRESS, // Инцидент в процессе обработки
+    RESOLVED     // Инцидент решен
 }

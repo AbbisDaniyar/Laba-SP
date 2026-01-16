@@ -24,6 +24,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+/**
+ * Класс тестов для проверки реализации сервиса пользователей.
+ * Проверяет работу методов сервиса пользователей с использованием mock-объектов.
+ */
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
@@ -43,6 +47,9 @@ class UserServiceImplTest {
     private Role testRole;
     private UserDto testUserDto;
 
+    /**
+     * Подготавливает тестовые данные перед каждым тестом.
+     */
     @BeforeEach
     void setUp() {
         testRole = new Role();
@@ -58,6 +65,10 @@ class UserServiceImplTest {
         testUserDto = new UserDto(1L, "testuser", "newPassword", "ROLE_USER", null);
     }
 
+    /**
+     * Тестирует получение всех пользователей.
+     * Проверяет, что метод возвращает список всех пользователей.
+     */
     @Test
     void getAllUsers_ShouldReturnAllUsers() {
         List<User> users = Arrays.asList(testUser);
@@ -70,6 +81,10 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findAll();
     }
 
+    /**
+     * Тестирует получение пользователя по ID, когда пользователь существует.
+     * Проверяет, что метод возвращает корректного пользователя.
+     */
     @Test
     void getUserById_WhenUserExists_ShouldReturnUser() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -81,6 +96,10 @@ class UserServiceImplTest {
         assertThat(result.get().username()).isEqualTo("testuser");
     }
 
+    /**
+     * Тестирует получение пользователя по ID, когда пользователь не существует.
+     * Проверяет, что метод возвращает пустой результат.
+     */
     @Test
     void getUserById_WhenUserNotExists_ShouldReturnEmpty() {
 
@@ -91,6 +110,10 @@ class UserServiceImplTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * Тестирует получение пользователя по имени, когда пользователь существует.
+     * Проверяет, что метод возвращает корректного пользователя.
+     */
     @Test
     void getUserByUsername_WhenUserExists_ShouldReturnUser() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
@@ -101,6 +124,10 @@ class UserServiceImplTest {
         assertThat(result.username()).isEqualTo("testuser");
     }
 
+    /**
+     * Тестирует получение пользователя по имени, когда пользователь не существует.
+     * Проверяет, что метод возвращает null.
+     */
     @Test
     void getUserByUsername_WhenUserNotExists_ShouldReturnNull() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
@@ -110,10 +137,14 @@ class UserServiceImplTest {
         assertThat(result).isNull();
     }
 
+    /**
+     * Тестирует создание пользователя с валидными данными.
+     * Проверяет, что метод создает нового пользователя с корректными данными.
+     */
     @Test
     void createUser_WithValidData_ShouldCreateUser() {
         UserDto newUserDto = new UserDto(null, "newuser", "password123", "ROLE_USER", null);
-        
+
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(testRole));
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
@@ -127,31 +158,39 @@ class UserServiceImplTest {
         assertThat(result).isNotNull();
         assertThat(result.username()).isEqualTo("newuser");
         assertThat(result.role()).isEqualTo("ROLE_USER");
-        
+
         verify(roleRepository, times(1)).findByName("USER");
         verify(passwordEncoder, times(1)).encode("password123");
         verify(userRepository, times(1)).save(any(User.class));
     }
 
+    /**
+     * Тестирует создание пользователя с невалидной ролью.
+     * Проверяет, что метод выбрасывает исключение при попытке создать пользователя с несуществующей ролью.
+     */
     @Test
     void createUser_WithInvalidRole_ShouldThrowException() {
         UserDto newUserDto = new UserDto(null, "newuser", "password123", "ROLE_INVALID", null);
-        
+
         when(roleRepository.findByName("INVALID")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> userService.createUser(newUserDto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Роль не найдена");
-        
+
         verify(userRepository, never()).save(any());
     }
 
+    /**
+     * Тестирует обновление пользователя, когда пользователь существует.
+     * Проверяет, что метод корректно обновляет данные пользователя.
+     */
     @Test
     void updateUser_WhenUserExists_ShouldUpdateUser() {
         UserDto updateDto = new UserDto(1L, "updateduser", "newPassword123", "ROLE_ADMIN", null);
         Role adminRole = new Role();
         adminRole.setId(2L);
         adminRole.setName("ADMIN");
-        
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
         when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
@@ -166,6 +205,10 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).save(any(User.class));
     }
 
+    /**
+     * Тестирует обновление пользователя, когда пользователь не существует.
+     * Проверяет, что метод выбрасывает исключение.
+     */
     @Test
     void updateUser_WhenUserNotExists_ShouldThrowException() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
@@ -173,14 +216,18 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateUser(999L, testUserDto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Пользователь не найден");
-        
+
         verify(userRepository, never()).save(any());
     }
 
+    /**
+     * Тестирует обновление пользователя без изменения пароля.
+     * Проверяет, что метод не вызывает кодирование пароля, если пароль не изменяется.
+     */
     @Test
     void updateUser_WithoutPasswordChange_ShouldNotEncodePassword() {
         UserDto updateDto = new UserDto(1L, "updateduser", null, "ROLE_USER", null);
-        
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(testRole));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
@@ -190,6 +237,10 @@ class UserServiceImplTest {
         verify(passwordEncoder, never()).encode(anyString());
     }
 
+    /**
+     * Тестирует удаление пользователя, когда пользователь существует.
+     * Проверяет, что метод корректно удаляет пользователя.
+     */
     @Test
     void deleteUser_WhenUserExists_ShouldDeleteUser() {
         when(userRepository.existsById(1L)).thenReturn(true);
@@ -200,6 +251,10 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).deleteById(1L);
     }
 
+    /**
+     * Тестирует удаление пользователя, когда пользователь не существует.
+     * Проверяет, что метод не выбрасывает исключение.
+     */
     @Test
     void deleteUser_WhenUserNotExists_ShouldNotThrowException() {
         when(userRepository.existsById(999L)).thenReturn(false);
@@ -209,6 +264,10 @@ class UserServiceImplTest {
         verify(userRepository, never()).deleteById(anyLong());
     }
 
+    /**
+     * Тестирует проверку существования пользователя, когда пользователь существует.
+     * Проверяет, что метод возвращает true.
+     */
     @Test
     void userExists_ShouldReturnTrueWhenUserExists() {
         when(userRepository.existsByUsername("existinguser")).thenReturn(true);
@@ -218,6 +277,10 @@ class UserServiceImplTest {
         assertThat(result).isTrue();
     }
 
+    /**
+     * Тестирует проверку существования пользователя, когда пользователь не существует.
+     * Проверяет, что метод возвращает false.
+     */
     @Test
     void userExists_ShouldReturnFalseWhenUserNotExists() {
 

@@ -21,6 +21,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Класс тестов для проверки реализации провайдера JWT токенов.
+ * Проверяет генерацию, валидацию и извлечение данных из JWT токенов.
+ */
 @ExtendWith(MockitoExtension.class)
 class JwtTokenProviderImplTest {
 
@@ -28,9 +32,13 @@ class JwtTokenProviderImplTest {
     private JwtTokenProviderImpl jwtTokenProvider;
 
     private UserDetails userDetails;
-    
+
     private final String secretKey = "bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkw";
 
+    /**
+     * Подготавливает тестовые данные перед каждым тестом.
+     * Устанавливает секретный ключ и создает тестового пользователя.
+     */
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", secretKey);
@@ -41,6 +49,10 @@ class JwtTokenProviderImplTest {
                 .build();
     }
 
+    /**
+     * Тестирует генерацию токена доступа.
+     * Проверяет, что сгенерированный токен содержит корректные данные и валиден.
+     */
     @Test
     void generateAccessToken_ShouldGenerateValidToken() {
         Map<String, Object> claims = new HashMap<>();
@@ -59,6 +71,10 @@ class JwtTokenProviderImplTest {
         assertEquals("testuser", jwtTokenProvider.getUsernameFromToken(token.getTokenValue()));
     }
 
+    /**
+     * Тестирует генерацию токена обновления.
+     * Проверяет, что сгенерированный токен содержит корректные данные и валиден.
+     */
     @Test
     void generateRefreshToken_ShouldGenerateValidToken() {
         Token token = jwtTokenProvider.generateRefreshToken(
@@ -72,6 +88,10 @@ class JwtTokenProviderImplTest {
         assertEquals("testuser", jwtTokenProvider.getUsernameFromToken(token.getTokenValue()));
     }
 
+    /**
+     * Тестирует валидацию действительного токена.
+     * Проверяет, что метод валидации возвращает true для действительного токена.
+     */
     @Test
     void validateToken_WithValidToken_ShouldReturnTrue() {
         Token token = jwtTokenProvider.generateAccessToken(
@@ -82,12 +102,20 @@ class JwtTokenProviderImplTest {
         assertTrue(isValid);
     }
 
+    /**
+     * Тестирует валидацию недействительного токена.
+     * Проверяет, что метод валидации возвращает false для недействительного или null токена.
+     */
     @Test
     void validateToken_WithInvalidToken_ShouldReturnFalse() {
         assertFalse(jwtTokenProvider.validateToken("invalid.token.here"));
         assertFalse(jwtTokenProvider.validateToken(null));
     }
 
+    /**
+     * Тестирует извлечение имени пользователя из токена.
+     * Проверяет, что метод возвращает корректное имя пользователя из действительного токена.
+     */
     @Test
     void getUsernameFromToken_ShouldReturnUsername() {
         Token token = jwtTokenProvider.generateAccessToken(
@@ -98,11 +126,19 @@ class JwtTokenProviderImplTest {
         assertEquals("testuser", username);
     }
 
+    /**
+     * Тестирует извлечение имени пользователя из недействительного токена.
+     * Проверяет, что метод возвращает null для недействительного токена.
+     */
     @Test
     void getUsernameFromToken_WithInvalidToken_ShouldReturnNull() {
         assertNull(jwtTokenProvider.getUsernameFromToken("invalid.token"));
     }
 
+    /**
+     * Тестирует извлечение даты истечения токена.
+     * Проверяет, что метод возвращает корректную дату истечения для действительного токена.
+     */
     @Test
     void getExpiryDateFromToken_ShouldReturnExpiryDate() {
         Token token = jwtTokenProvider.generateAccessToken(
@@ -114,6 +150,10 @@ class JwtTokenProviderImplTest {
         assertTrue(expiryDate.isAfter(LocalDateTime.now()));
     }
 
+    /**
+     * Тестирует добавление пользовательских утверждений в токен.
+     * Проверяет, что токен может содержать дополнительные пользовательские утверждения.
+     */
     @Test
     void tokens_ShouldContainCustomClaims() {
         Map<String, Object> claims = new HashMap<>();
@@ -128,7 +168,7 @@ class JwtTokenProviderImplTest {
         assertThat(token.getTokenValue()).isNotBlank();
 
         assertTrue(jwtTokenProvider.validateToken(token.getTokenValue()));
-        
+
         String username = jwtTokenProvider.getUsernameFromToken(token.getTokenValue());
         assertEquals("testuser", username);
     }

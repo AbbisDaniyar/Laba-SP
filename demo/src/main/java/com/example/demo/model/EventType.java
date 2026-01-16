@@ -1,6 +1,11 @@
 package com.example.demo.model;
 
+/**
+ * Перечисление типов событий инцидентов.
+ * Определяет возможные типы событий, которые могут быть зарегистрированы в системе.
+ */
 public enum EventType {
-    ACCIDENT, HARD_BRAKING, BUTTON   
-
+    ACCIDENT,       // ДТП
+    HARD_BRAKING,   // Резкое торможение
+    BUTTON          // Нажатие кнопки (например, тревожной)
 }

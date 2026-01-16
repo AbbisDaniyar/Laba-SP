@@ -25,6 +25,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
+/**
+ * Класс тестов для проверки сервиса оповещений.
+ * Проверяет работу методов сервиса с использованием mock-объектов.
+ */
 @ExtendWith(MockitoExtension.class)
 class AlertServiceTest {
 
@@ -37,6 +41,9 @@ class AlertServiceTest {
     private Alert testAlert;
     private CacheManager cacheManager;
 
+    /**
+     * Подготавливает тестовые данные перед каждым тестом.
+     */
     @BeforeEach
     void setUp() {
         testAlert = new Alert();
@@ -47,10 +54,14 @@ class AlertServiceTest {
         testAlert.setDescription("Столкновение с другим автомобилем");
         testAlert.setStatus(StatusType.NEW);
         testAlert.setTimestamp(LocalDateTime.now());
-        
+
         cacheManager = new ConcurrentMapCacheManager("alerts", "alertsByStatus", "alertsByBus", "alertsByUser");
     }
 
+    /**
+     * Тестирует получение всех оповещений.
+     * Проверяет, что метод возвращает список всех оповещений.
+     */
     @Test
     void findAll_ShouldReturnAllAlerts() {
         List<Alert> alerts = Arrays.asList(testAlert, testAlert);
@@ -63,6 +74,10 @@ class AlertServiceTest {
         verify(alertRepository, times(1)).findAll();
     }
 
+    /**
+     * Тестирует получение оповещения по ID, когда оповещение существует.
+     * Проверяет, что метод возвращает корректное оповещение.
+     */
     @Test
     void findById_WhenAlertExists_ShouldReturnAlert() {
         when(alertRepository.findById(1L)).thenReturn(Optional.of(testAlert));
@@ -74,6 +89,10 @@ class AlertServiceTest {
         assertThat(result.get().getStatus()).isEqualTo(StatusType.NEW);
     }
 
+    /**
+     * Тестирует получение оповещения по ID, когда оповещение не существует.
+     * Проверяет, что метод возвращает пустой результат.
+     */
     @Test
     void findById_WhenAlertNotExists_ShouldReturnEmpty() {
         when(alertRepository.findById(999L)).thenReturn(Optional.empty());
@@ -83,6 +102,10 @@ class AlertServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * Тестирует получение оповещений по статусу.
+     * Проверяет, что метод возвращает список оповещений с указанным статусом.
+     */
     @Test
     void findByStatus_ShouldReturnAlertsWithStatus() {
         List<Alert> alerts = Arrays.asList(testAlert);
@@ -94,6 +117,10 @@ class AlertServiceTest {
         assertThat(result.get(0).getStatus()).isEqualTo(StatusType.NEW);
     }
 
+    /**
+     * Тестирует создание нового оповещения.
+     * Проверяет, что метод сохраняет и возвращает новое оповещение с корректными данными.
+     */
     @Test
     void create_ShouldSaveAndReturnAlert() {
         Alert newAlert = new Alert();
@@ -101,7 +128,7 @@ class AlertServiceTest {
         newAlert.setType(EventType.HARD_BRAKING);
         newAlert.setLocation("Санкт-Петербург, Невский проспект");
         newAlert.setDescription("Резкое торможение");
-        
+
         when(alertRepository.save(any(Alert.class))).thenAnswer(invocation -> {
             Alert alert = invocation.getArgument(0);
             alert.setId(2L);
@@ -118,12 +145,16 @@ class AlertServiceTest {
         verify(alertRepository, times(1)).save(any(Alert.class));
     }
 
+    /**
+     * Тестирует обновление статуса оповещения, когда оповещение существует.
+     * Проверяет, что метод обновляет статус оповещения.
+     */
     @Test
     void updateStatus_WhenAlertExists_ShouldUpdateStatus() {
         Alert existingAlert = new Alert();
         existingAlert.setId(1L);
         existingAlert.setStatus(StatusType.NEW);
-        
+
         when(alertRepository.findById(1L)).thenReturn(Optional.of(existingAlert));
         when(alertRepository.save(any(Alert.class))).thenReturn(existingAlert);
 
@@ -134,6 +165,10 @@ class AlertServiceTest {
         verify(alertRepository, times(1)).save(existingAlert);
     }
 
+    /**
+     * Тестирует обновление статуса оповещения, когда оповещение не существует.
+     * Проверяет, что метод выбрасывает исключение.
+     */
     @Test
     void updateStatus_WhenAlertNotExists_ShouldThrowException() {
         when(alertRepository.findById(999L)).thenReturn(Optional.empty());
@@ -141,16 +176,20 @@ class AlertServiceTest {
         assertThatThrownBy(() -> alertService.updateStatus(999L, StatusType.RESOLVED))
                 .isInstanceOf(AlertNotFoundException.class)
                 .hasMessageContaining("Инцидент с ID 999 не найден");
-        
+
         verify(alertRepository, never()).save(any());
     }
 
+    /**
+     * Тестирует назначение оповещения пользователю.
+     * Проверяет, что метод корректно назначает пользователя и изменяет статус.
+     */
     @Test
     void assignToUser_ShouldAssignUserAndChangeStatus() {
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setStatus(StatusType.NEW);
-        
+
         when(alertRepository.findById(1L)).thenReturn(Optional.of(alert));
         when(alertRepository.save(any(Alert.class))).thenReturn(alert);
 
@@ -161,6 +200,10 @@ class AlertServiceTest {
         verify(alertRepository, times(1)).save(alert);
     }
 
+    /**
+     * Тестирует удаление оповещения по ID, когда оповещение существует.
+     * Проверяет, что метод корректно удаляет оповещение.
+     */
     @Test
     void deleteById_WhenAlertExists_ShouldDelete() {
         when(alertRepository.existsById(1L)).thenReturn(true);
@@ -172,16 +215,24 @@ class AlertServiceTest {
         verify(alertRepository, times(1)).existsById(1L);
     }
 
+    /**
+     * Тестирует удаление оповещения по ID, когда оповещение не существует.
+     * Проверяет, что метод выбрасывает исключение.
+     */
     @Test
     void deleteById_WhenAlertNotExists_ShouldThrowException() {
         when(alertRepository.existsById(999L)).thenReturn(false);
 
         assertThatThrownBy(() -> alertService.deleteById(999L))
                 .isInstanceOf(AlertNotFoundException.class);
-        
+
         verify(alertRepository, never()).deleteById(anyLong());
     }
 
+    /**
+     * Тестирует получение оповещений по ID автобуса.
+     * Проверяет, что метод возвращает список оповещений для указанного автобуса.
+     */
     @Test
     void findByBusId_ShouldReturnAlertsForBus() {
         List<Alert> alerts = Arrays.asList(testAlert);
@@ -193,6 +244,10 @@ class AlertServiceTest {
         assertThat(result.get(0).getBusId()).isEqualTo(101L);
     }
 
+    /**
+     * Тестирует получение оповещений по ID назначенного пользователя.
+     * Проверяет, что метод возвращает список оповещений, назначенных указанному пользователю.
+     */
     @Test
     void findByAssignedToUserId_ShouldReturnAlertsForUser() {
         testAlert.setAssignedToUserId(5L);

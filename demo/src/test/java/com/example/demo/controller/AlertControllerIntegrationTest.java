@@ -30,6 +30,10 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Интеграционные тесты для контроллера оповещений.
+ * Проверяет работу REST-эндпоинтов контроллера оповещений с использованием MockMvc.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class AlertControllerIntegrationTest {
@@ -48,6 +52,9 @@ class AlertControllerIntegrationTest {
 
     private Alert testAlert;
 
+    /**
+     * Подготавливает тестовые данные перед каждым тестом.
+     */
     @BeforeEach
     void setUp() {
 
@@ -61,6 +68,12 @@ class AlertControllerIntegrationTest {
         testAlert.setStatus(StatusType.NEW);
     }
 
+    /**
+     * Тестирует получение всех оповещений.
+     * Проверяет, что эндпоинт возвращает список оповещений с правильными данными.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getAllAlerts_ShouldReturnAlerts() throws Exception {
@@ -76,6 +89,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].type", is("ACCIDENT")));
     }
 
+    /**
+     * Тестирует получение оповещений с фильтрацией по статусу.
+     * Проверяет, что эндпоинт возвращает отфильтрованный список оповещений.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getAllAlerts_WithStatusFilter_ShouldReturnFilteredAlerts() throws Exception {
@@ -90,6 +109,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].status", is("NEW")));
     }
 
+    /**
+     * Тестирует получение оповещения по ID, когда оповещение существует.
+     * Проверяет, что эндпоинт возвращает корректное оповещение.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getAlertById_WhenAlertExists_ShouldReturnAlert() throws Exception {
@@ -102,6 +127,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$.busId", is(101)));
     }
 
+    /**
+     * Тестирует получение оповещения по ID, когда оповещение не существует.
+     * Проверяет, что эндпоинт возвращает статус 404.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getAlertById_WhenAlertNotExists_ShouldReturn404() throws Exception {
@@ -112,6 +143,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /**
+     * Тестирует создание оповещения с валидными данными.
+     * Проверяет, что эндпоинт создает новое оповещение и возвращает корректный ответ.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void createAlert_WithValidData_ShouldCreateAlert() throws Exception {
@@ -131,10 +168,16 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$.id", is(1)));
     }
 
+    /**
+     * Тестирует создание оповещения с невалидными данными.
+     * Проверяет, что эндпоинт возвращает статус 400 Bad Request.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void createAlert_WithInvalidData_ShouldReturnBadRequest() throws Exception {
-        Alert invalidAlert = new Alert(); 
+        Alert invalidAlert = new Alert();
 
         mockMvc.perform(post("/api/alerts")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -143,6 +186,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$", aMapWithSize(greaterThan(0))));
     }
 
+    /**
+     * Тестирует обновление статуса оповещения.
+     * Проверяет, что эндпоинт корректно обновляет статус оповещения.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void updateStatus_ShouldUpdateStatus() throws Exception {
@@ -155,6 +204,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(jsonPath("$.id", is(1)));
     }
 
+    /**
+     * Тестирует назначение оповещения пользователю.
+     * Проверяет, что эндпоинт корректно назначает оповещение пользователю.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void assignAlert_ShouldAssignToUser() throws Exception {
@@ -166,6 +221,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    /**
+     * Тестирует удаление оповещения.
+     * Проверяет, что эндпоинт корректно удаляет оповещение.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void deleteAlert_ShouldDeleteAlert() throws Exception {
@@ -176,6 +237,12 @@ class AlertControllerIntegrationTest {
                 .andExpect(status().isNoContent());
     }
 
+    /**
+     * Тестирует очистку кэша оповещений.
+     * Проверяет, что эндпоинт корректно очищает кэш и возвращает успешный ответ.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void clearCache_ShouldClearCache() throws Exception {

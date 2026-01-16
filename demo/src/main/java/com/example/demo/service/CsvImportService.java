@@ -22,13 +22,22 @@ import com.example.demo.model.StatusType;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Сервис для импорта оповещений из CSV-файлов.
+ * Предоставляет методы для обработки CSV-файлов и преобразования их содержимого в оповещения.
+ */
 @Service
 @RequiredArgsConstructor
 public class CsvImportService {
     private static final Logger log = LoggerFactory.getLogger(CsvImportService.class);
-    
+
     private final AlertService alertService;
 
+    /**
+     * Создает формат CSV-парсера с настройками.
+     *
+     * @return Объект CSVFormat с настроенными параметрами
+     */
     private CSVFormat createCsvFormat() {
         return CSVFormat.DEFAULT.builder()
                 .setHeader()
@@ -38,9 +47,17 @@ public class CsvImportService {
                 .build();
     }
 
+    /**
+     * Импортирует оповещения из CSV-файла.
+     * Обрабатывает каждый ряд CSV-файла и создает соответствующие оповещения.
+     *
+     * @param file MultipartFile, представляющий CSV-файл для импорта
+     * @return Объект CsvImportResult с результатами импорта (количество созданных,
+     *         неудачных попыток, ошибки и ID созданных оповещений)
+     */
     public CsvImportResult importAlertsFromCsv(MultipartFile file) {
         log.info("Начало импорта CSV файла: {}", file.getOriginalFilename());
-        
+
         List<String> errors = new ArrayList<>();
         List<Alert> validAlerts = new ArrayList<>();
         List<Long> createdAlertIds = new ArrayList<>();
@@ -64,23 +81,23 @@ public class CsvImportService {
             }
 
             log.info("Файл прочитан, всего строк: {}, валидных: {}", totalRows, validAlerts.size());
-            
+
             for (Alert alert : validAlerts) {
                 try {
                     Alert savedAlert = alertService.create(alert);
                     createdAlertIds.add(savedAlert.getId());
-                    log.info("Успешно сохранен инцидент ID: {}, автобус: {}, тип: {}", 
+                    log.info("Успешно сохранен инцидент ID: {}, автобус: {}, тип: {}",
                             savedAlert.getId(), savedAlert.getBusId(), savedAlert.getType());
                 } catch (Exception e) {
-                    String errorMsg = "Не удалось сохранить инцидент: автобус " + alert.getBusId() + 
+                    String errorMsg = "Не удалось сохранить инцидент: автобус " + alert.getBusId() +
                               ", тип " + alert.getType() + " - " + e.getMessage();
                     errors.add(errorMsg);
-                    log.error("Ошибка сохранения инцидента: автобус {}, тип {}", 
+                    log.error("Ошибка сохранения инцидента: автобус {}, тип {}",
                              alert.getBusId(), alert.getType(), e);
                 }
             }
 
-            log.info("Импорт завершен: успешно сохранено {}, не удалось {}", 
+            log.info("Импорт завершен: успешно сохранено {}, не удалось {}",
                     createdAlertIds.size(), validAlerts.size() - createdAlertIds.size());
 
             return new CsvImportResult(
@@ -97,32 +114,39 @@ public class CsvImportService {
         }
     }
 
+    /**
+     * Обрабатывает одну запись из CSV-файла и преобразует её в объект Alert.
+     *
+     * @param csvRecord Объект CSVRecord, представляющий одну строку CSV-файла
+     * @return Объект Alert, созданный из данных CSV-записи
+     * @throws IllegalArgumentException Если данные в CSV-записи некорректны
+     */
     private Alert processCsvRecord(CSVRecord csvRecord) {
         log.debug("Обработка строки CSV: {}", csvRecord.getRecordNumber());
-        
+
         validateRequiredField(csvRecord, "bus_id", "ID автобуса");
         validateRequiredField(csvRecord, "type", "Тип инцидента");
         validateRequiredField(csvRecord, "location", "Местоположение");
         validateRequiredField(csvRecord, "description", "Описание");
 
         Alert alert = new Alert();
-        
+
         try {
             alert.setBusId(Long.parseLong(csvRecord.get("bus_id").trim()));
             log.trace("ID автобуса установлен: {}", alert.getBusId());
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Некорректный ID автобуса: " + csvRecord.get("bus_id"));
         }
-        
+
         try {
             String typeStr = csvRecord.get("type").trim().toUpperCase();
             alert.setType(EventType.valueOf(typeStr));
             log.trace("Тип инцидента установлен: {}", alert.getType());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Некорректный тип инцидента: " + csvRecord.get("type") + 
+            throw new IllegalArgumentException("Некорректный тип инцидента: " + csvRecord.get("type") +
                                              ". Допустимые значения: ACCIDENT, HARD_BRAKING, BUTTON");
         }
-        
+
         alert.setLocation(csvRecord.get("location").trim());
         alert.setDescription(csvRecord.get("description").trim());
         log.trace("Местоположение и описание установлены");
@@ -140,7 +164,7 @@ public class CsvImportService {
             alert.setStatus(StatusType.NEW);
             log.trace("Статус установлен по умолчанию: NEW");
         }
-        
+
         if (csvRecord.isSet("assigned_to_user_id") && !csvRecord.get("assigned_to_user_id").trim().isEmpty()) {
             try {
                 alert.setAssignedToUserId(Long.parseLong(csvRecord.get("assigned_to_user_id").trim()));
@@ -149,11 +173,19 @@ public class CsvImportService {
                 throw new IllegalArgumentException("Некорректный ID пользователя: " + csvRecord.get("assigned_to_user_id"));
             }
         }
-        
+
         log.debug("Строка CSV успешно обработана в объект Alert");
         return alert;
     }
 
+    /**
+     * Проверяет обязательное поле в CSV-записи.
+     *
+     * @param csvRecord Объект CSVRecord, представляющий строку CSV-файла
+     * @param fieldName Имя поля для проверки
+     * @param fieldDescription Описание поля для сообщения об ошибке
+     * @throws IllegalArgumentException Если поле отсутствует или пустое
+     */
     private void validateRequiredField(CSVRecord csvRecord, String fieldName, String fieldDescription) {
         if (!csvRecord.isSet(fieldName) || csvRecord.get(fieldName).trim().isEmpty()) {
             throw new IllegalArgumentException(fieldDescription + " не может быть пустым");

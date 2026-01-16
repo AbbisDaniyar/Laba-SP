@@ -19,6 +19,10 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 
+/**
+ * Контроллер для загрузки файлов к инцидентам.
+ * Обрабатывает запросы на загрузку файлов и привязку их к существующим инцидентам.
+ */
 @RestController
 @RequiredArgsConstructor
 public class FileController {
@@ -27,63 +31,74 @@ public class FileController {
     private final FileService fileService;
     private final AlertService alertService;
 
+    /**
+     * Загружает файл и привязывает его к инциденту.
+     * Доступно пользователям с ролью ADMIN или MANAGER.
+     *
+     * @param file файл для загрузки
+     * @param id ID инцидента, к которому привязывается файл
+     * @return результат загрузки файла
+     */
     @PostMapping(value = "/api/alerts/{id}/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> uploadFile(
-            @RequestParam("file") MultipartFile file, 
+            @RequestParam("file") MultipartFile file,
             @PathVariable Long id) {
-        
-        log.debug("Запрос загрузки файла - ID инцидента: {}, имя файла: {}, размер: {} байт", 
+
+        log.debug("Запрос загрузки файла - ID инцидента: {}, имя файла: {}, размер: {} байт",
                  id, file.getOriginalFilename(), file.getSize());
-        
+
         try {
             // Проверяем существование инцидента
             if (!alertService.findById(id).isPresent()) {
                 log.warn("Загрузка файла не удалась: инцидент не найден - id={}", id);
                 return ResponseEntity.badRequest().body("Инцидент не найден");
             }
-            
+
             String resultFile = fileService.storeFile(file);
             log.debug("Файл успешно сохранен: {}", resultFile);
-            
+
             Alert updatedAlert = alertService.addFileToAlert(id, resultFile);
-            log.info("Файл успешно загружен - ID инцидента: {}, имя файла: {}", 
+            log.info("Файл успешно загружен - ID инцидента: {}, имя файла: {}",
                     id, resultFile);
-            
+
             return ResponseEntity.ok().body(new UploadResponse(
-                true, 
-                "Файл успешно загружен", 
+                true,
+                "Файл успешно загружен",
                 resultFile,
                 updatedAlert
             ));
-            
+
         } catch (IOException e) {
             log.error("Ошибка загрузки файла - ID инцидента: {}, ошибка: {}", id, e.getMessage(), e);
             return ResponseEntity.badRequest().body(new UploadResponse(
-                false, 
-                "Ошибка загрузки файла: " + e.getMessage(), 
+                false,
+                "Ошибка загрузки файла: " + e.getMessage(),
                 null,
                 null
             ));
         } catch (Exception e) {
-            log.error("Непредвиденная ошибка при загрузке файла - ID инцидента: {}, ошибка: {}", 
+            log.error("Непредвиденная ошибка при загрузке файла - ID инцидента: {}, ошибка: {}",
                      id, e.getMessage(), e);
             return ResponseEntity.badRequest().body(new UploadResponse(
-                false, 
-                "Ошибка: " + e.getMessage(), 
+                false,
+                "Ошибка: " + e.getMessage(),
                 null,
                 null
             ));
         }
     }
-    
-    
+
+
+    /**
+     * Класс для представления ответа на запрос загрузки файла.
+     */
     public static record UploadResponse(
-        boolean success, 
-        String message, 
-        String fileName,
-        Alert alert
+        boolean success,      // Успешна ли загрузка
+        String message,       // Сообщение о результате
+        String fileName,      // Имя загруженного файла
+        Alert alert           // Обновленный инцидент
     ) {}
 }

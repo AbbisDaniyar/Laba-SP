@@ -16,25 +16,38 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Сервис для отправки уведомлений в Telegram.
+ * Предоставляет методы для отправки различных типов уведомлений,
+ * таких как уведомления об аутентификации и общие уведомления.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramNotificationService {
-    
+
     private final TelegramConfig telegramConfig;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot{token}/sendMessage";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     
 
+    /**
+     * Отправляет уведомление об аутентификации пользователя в Telegram.
+     *
+     * @param username Имя пользователя
+     * @param role Роль пользователя
+     * @param ipAddress IP-адрес пользователя
+     * @param success Флаг успешности аутентификации (true - успешная, false - неудачная)
+     */
     public void sendAuthNotification(String username, String role, String ipAddress, boolean success) {
         if (!telegramConfig.isEnabled()) {
             log.debug("Уведомления в Telegram отключены");
             return;
         }
-        
+
         try {
             String message = buildAuthMessage(username, role, ipAddress, success);
             sendMessage(message);
@@ -43,13 +56,20 @@ public class TelegramNotificationService {
             log.error("Ошибка отправки уведомления в Telegram", e);
         }
     }
-    
 
+
+    /**
+     * Отправляет уведомление об ошибке аутентификации пользователя в Telegram.
+     *
+     * @param username Имя пользователя
+     * @param ipAddress IP-адрес пользователя
+     * @param errorMessage Сообщение об ошибке
+     */
     public void sendAuthErrorNotification(String username, String ipAddress, String errorMessage) {
         if (!telegramConfig.isEnabled()) {
             return;
         }
-        
+
         try {
             String message = buildAuthErrorMessage(username, ipAddress, errorMessage);
             sendMessage(message);
@@ -58,13 +78,19 @@ public class TelegramNotificationService {
             log.error("Ошибка отправки уведомления об ошибке в Telegram", e);
         }
     }
-    
 
+
+    /**
+     * Отправляет общее уведомление в Telegram.
+     *
+     * @param title Заголовок уведомления
+     * @param content Содержание уведомления
+     */
     public void sendNotification(String title, String content) {
         if (!telegramConfig.isEnabled()) {
             return;
         }
-        
+
         try {
             String message = buildGeneralMessage(title, content);
             sendMessage(message);
@@ -75,10 +101,19 @@ public class TelegramNotificationService {
     }
     
 
+    /**
+     * Создает сообщение об аутентификации для отправки в Telegram.
+     *
+     * @param username Имя пользователя
+     * @param role Роль пользователя
+     * @param ipAddress IP-адрес пользователя
+     * @param success Флаг успешности аутентификации
+     * @return Строка сформированного сообщения
+     */
     private String buildAuthMessage(String username, String role, String ipAddress, boolean success) {
         String status = success ? "✅ УСПЕШНАЯ" : "❌ НЕУДАЧНАЯ";
         String emoji = success ? "🔓" : "🔒";
-        
+
         return String.format(
             "%s *АУТЕНТИФИКАЦИЯ* %s\n\n" +
             " *Пользователь:* `%s`\n" +
@@ -94,7 +129,15 @@ public class TelegramNotificationService {
             LocalDateTime.now().format(DATE_FORMATTER)
         );
     }
-    
+
+    /**
+     * Создает сообщение об ошибке аутентификации для отправки в Telegram.
+     *
+     * @param username Имя пользователя
+     * @param ipAddress IP-адрес пользователя
+     * @param errorMessage Сообщение об ошибке
+     * @return Строка сформированного сообщения
+     */
     private String buildAuthErrorMessage(String username, String ipAddress, String errorMessage) {
         return String.format(
             " *ОШИБКА АУТЕНТИФИКАЦИИ*\n\n" +
@@ -108,7 +151,14 @@ public class TelegramNotificationService {
             LocalDateTime.now().format(DATE_FORMATTER)
         );
     }
-    
+
+    /**
+     * Создает общее сообщение для отправки в Telegram.
+     *
+     * @param title Заголовок сообщения
+     * @param content Содержание сообщения
+     * @return Строка сформированного сообщения
+     */
     private String buildGeneralMessage(String title, String content) {
         return String.format(
             " *%s*\n\n%s\n\n🕐 *Время:* %s",
@@ -117,40 +167,45 @@ public class TelegramNotificationService {
             LocalDateTime.now().format(DATE_FORMATTER)
         );
     }
-    
+
+    /**
+     * Отправляет сообщение в Telegram через API.
+     *
+     * @param text Текст сообщения для отправки
+     */
     private void sendMessage(String text) {
         try {
             String token = telegramConfig.getToken();
             String chatId = telegramConfig.getChatId();
-            
+
             if (token == null || token.isEmpty() || chatId == null || chatId.isEmpty()) {
                 log.warn("Не настроены токен или chat_id для Telegram бота");
                 return;
             }
-            
+
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("chat_id", chatId);
             requestBody.put("text", text);
             requestBody.put("parse_mode", "Markdown");
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            
+
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            
+
             ResponseEntity<String> response = restTemplate.postForEntity(
                 TELEGRAM_API_URL,
                 request,
                 String.class,
                 token
             );
-            
+
             if (!response.getStatusCode().is2xxSuccessful()) {
                 log.error("Ошибка отправки сообщения в Telegram: {}", response.getBody());
             } else {
                 log.debug("Сообщение успешно отправлено в Telegram");
             }
-            
+
         } catch (Exception e) {
             log.error("Исключение при отправке сообщения в Telegram", e);
             throw new RuntimeException("Ошибка отправки сообщения в Telegram: " + e.getMessage(), e);

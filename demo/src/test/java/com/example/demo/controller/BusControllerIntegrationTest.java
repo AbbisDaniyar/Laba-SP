@@ -22,6 +22,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Интеграционные тесты для контроллера автобусов.
+ * Проверяет работу REST-эндпоинтов контроллера автобусов с использованием MockMvc.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class BusControllerIntegrationTest {
@@ -35,6 +39,12 @@ class BusControllerIntegrationTest {
     @MockBean
     private BusService busService;
 
+    /**
+     * Тестирует получение всех автобусов.
+     * Проверяет, что эндпоинт возвращает список автобусов с правильными данными.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getAllBuses_ShouldReturnBuses() throws Exception {
@@ -42,7 +52,7 @@ class BusControllerIntegrationTest {
             new BusDto(1L, "Mercedes-Benz"),
             new BusDto(2L, "Volvo")
         );
-        
+
         when(busService.getAllBuses()).thenReturn(buses);
 
         mockMvc.perform(get("/api/buses")
@@ -55,11 +65,17 @@ class BusControllerIntegrationTest {
                 .andExpect(jsonPath("$[1].model", is("Volvo")));
     }
 
+    /**
+     * Тестирует получение автобуса по ID, когда автобус существует.
+     * Проверяет, что эндпоинт возвращает корректный автобус.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"USER"})
     void getBusById_WhenBusExists_ShouldReturnBus() throws Exception {
         BusDto bus = new BusDto(1L, "Mercedes-Benz");
-        
+
         when(busService.getBusById(1L)).thenReturn(bus);
 
         mockMvc.perform(get("/api/buses/1")
@@ -69,12 +85,18 @@ class BusControllerIntegrationTest {
                 .andExpect(jsonPath("$.model", is("Mercedes-Benz")));
     }
 
+    /**
+     * Тестирует создание автобуса с валидными данными.
+     * Проверяет, что эндпоинт создает новый автобус и возвращает корректный ответ.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void createBus_WithValidData_ShouldCreateBus() throws Exception {
         BusDto newBus = new BusDto(null, "New Bus Model");
         BusDto createdBus = new BusDto(1L, "New Bus Model");
-        
+
         when(busService.createBus(any(BusDto.class))).thenReturn(createdBus);
 
         mockMvc.perform(post("/api/buses")
@@ -86,11 +108,17 @@ class BusControllerIntegrationTest {
                 .andExpect(jsonPath("$.model", is("New Bus Model")));
     }
 
+    /**
+     * Тестирует обновление автобуса.
+     * Проверяет, что эндпоинт корректно обновляет данные автобуса.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"MANAGER"})
     void updateBus_ShouldUpdateBus() throws Exception {
         BusDto updatedBus = new BusDto(1L, "Updated Model");
-        
+
         when(busService.updateBus(eq(1L), any(BusDto.class))).thenReturn(updatedBus);
 
         mockMvc.perform(put("/api/buses/1")
@@ -101,6 +129,12 @@ class BusControllerIntegrationTest {
                 .andExpect(jsonPath("$.model", is("Updated Model")));
     }
 
+    /**
+     * Тестирует удаление автобуса.
+     * Проверяет, что эндпоинт корректно удаляет автобус.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void deleteBus_ShouldDeleteBus() throws Exception {

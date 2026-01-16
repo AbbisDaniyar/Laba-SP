@@ -13,16 +13,27 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Класс тестов для проверки валидации DTO запроса на изменение пароля.
+ * Проверяет, что аннотации валидации работают корректно для различных сценариев.
+ */
 class ChangePasswordRequestValidationTest {
 
     private static Validator validator;
 
+    /**
+     * Инициализирует валидатор перед выполнением тестов.
+     */
     @BeforeAll
     static void setUp() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
+    /**
+     * Тестирует валидацию при корректных данных.
+     * Проверяет, что при валидных значениях в полях не возникает нарушений.
+     */
     @Test
     void whenAllFieldsValid_thenNoViolations() {
         ChangePasswordRequest request = new ChangePasswordRequest(
@@ -36,6 +47,10 @@ class ChangePasswordRequestValidationTest {
         assertThat(violations).isEmpty();
     }
 
+    /**
+     * Тестирует валидацию при пустом текущем пароле.
+     * Проверяет, что возникает нарушение при пустом значении текущего пароля.
+     */
     @Test
     void whenCurrentPasswordBlank_thenViolation() {
         ChangePasswordRequest request = new ChangePasswordRequest(
@@ -51,6 +66,10 @@ class ChangePasswordRequestValidationTest {
                 .isEqualTo("Текущий пароль не может быть пустым");
     }
 
+    /**
+     * Тестирует валидацию при слишком коротком новом пароле.
+     * Проверяет, что возникает нарушение при недостаточной длине нового пароля.
+     */
     @Test
     void whenNewPasswordTooShort_thenViolation() {
 
@@ -67,6 +86,10 @@ class ChangePasswordRequestValidationTest {
                 .isEqualTo("Новый пароль должен содержать минимум 8 символов");
     }
 
+    /**
+     * Тестирует валидацию при пустом подтверждении пароля.
+     * Проверяет, что возникает нарушение при пустом значении подтверждения пароля.
+     */
     @Test
     void whenConfirmPasswordBlank_thenViolation() {
         ChangePasswordRequest request = new ChangePasswordRequest(
@@ -83,6 +106,10 @@ class ChangePasswordRequestValidationTest {
     }
 
 
+    /**
+     * Тестирует валидацию при пустом новом пароле.
+     * Проверяет, что возникает несколько нарушений при пустом новом пароле.
+     */
     @Test
     void whenNewPasswordBlank_thenViolation() {
         ChangePasswordRequest request = new ChangePasswordRequest(
@@ -101,6 +128,10 @@ class ChangePasswordRequestValidationTest {
         assertThat(messages).contains("Новый пароль должен содержать минимум 8 символов");
     }
 
+    /**
+     * Тестирует валидацию при пустых значениях во всех полях.
+     * Проверяет, что возникает несколько нарушений при пустых значениях.
+     */
     @Test
     void whenAllFieldsBlank_thenMultipleViolations() {
         ChangePasswordRequest request = new ChangePasswordRequest("", "", "");

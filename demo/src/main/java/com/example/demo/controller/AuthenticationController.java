@@ -28,41 +28,60 @@ import com.example.demo.service.UserService;
 import com.example.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Контроллер для аутентификации и управления сессиями пользователей.
+ * Обрабатывает операции входа, выхода, обновления токенов и изменения пароля.
+ */
 @Tag(name = "Authentication", description = "API для аутентификации и управления сессиями")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
     private static final Logger log = LoggerFactory.getLogger(AuthenticationController.class);
-    
+
     private final AuthService authService;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    @Operation(summary = "Логин пользователя", description = "Аутентификация пользователя по логину и паролю. Возвращает JWT-токены.")    
+    /**
+     * Аутентифицирует пользователя по логину и паролю.
+     * Возвращает JWT-токены при успешной аутентификации.
+     *
+     * @param accessToken существующий access токен (если есть)
+     * @param refreshToken существующий refresh токен (если есть)
+     * @param loginRequest данные для входа (логин и пароль)
+     * @return ответ с JWT-токенами при успешной аутентификации
+     */
+    @Operation(summary = "Логин пользователя", description = "Аутентификация пользователя по логину и паролю. Возвращает JWT-токены.")
     @ApiResponse(responseCode = "200", description = "Успешная аутентификация")
-    @ApiResponse(responseCode = "400", description = "Неверные учетные данные")    
+    @ApiResponse(responseCode = "400", description = "Неверные учетные данные")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @CookieValue(name = "access_token", required = false) String accessToken,
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             @RequestBody LoginRequest loginRequest) {
         log.info("Попытка входа пользователя: {}", loginRequest.username());
-        log.debug("Существующие токены - access: {}, refresh: {}", 
-                 accessToken != null ? "присутствует" : "отсутствует", 
+        log.debug("Существующие токены - access: {}, refresh: {}",
+                 accessToken != null ? "присутствует" : "отсутствует",
                  refreshToken != null ? "присутствует" : "отсутствует");
-        
+
         ResponseEntity<LoginResponse> response = authService.login(loginRequest, accessToken, refreshToken);
-        
+
         if (response.getStatusCode() == HttpStatus.OK) {
             log.info("Успешный вход пользователя: {}", loginRequest.username());
         } else {
             log.warn("Неудачная попытка входа пользователя: {}", loginRequest.username());
         }
-        
+
         return response;
     }
 
+    /**
+     * Обновляет access токен по refresh токену.
+     *
+     * @param refreshToken refresh токен для обновления
+     * @return новый JWT-токен при успешном обновлении
+     */
     @Operation(summary = "Обновление токена", description = "Генерация нового access-токена по refresh-токену")
     @ApiResponse(responseCode = "200", description = "Токен успешно обновлен")
     @ApiResponse(responseCode = "400", description = "Недействительный refresh-токен")
@@ -71,23 +90,30 @@ public class AuthenticationController {
             @CookieValue(name = "refresh_token", required = false) String refreshToken) {
         log.info("Запрос на обновление токена");
         log.debug("Refresh токен предоставлен: {}", refreshToken != null ? "присутствует" : "отсутствует");
-        
+
         if (refreshToken == null) {
             log.warn("Refresh токен отсутствует");
             return ResponseEntity.badRequest().build();
         }
-        
+
         ResponseEntity<LoginResponse> response = authService.refresh(refreshToken);
-        
+
         if (response.getStatusCode() == HttpStatus.OK) {
             log.info("Токен успешно обновлен");
         } else {
             log.warn("Не удалось обновить токен");
         }
-        
+
         return response;
     }
 
+    /**
+     * Выполняет выход пользователя из системы, инвалидируя текущие токены.
+     *
+     * @param accessToken access токен для инвалидации
+     * @param refreshToken refresh токен для инвалидации
+     * @return ответ об успешном выходе
+     */
     @Operation(summary = "Выход из системы", description = "Инвалидация текущих JWT-токенов")
     @ApiResponse(responseCode = "200", description = "Сессия завершена")
     @PostMapping("/logout")
@@ -95,16 +121,22 @@ public class AuthenticationController {
             @CookieValue(name = "access_token", required = false) String accessToken,
             @CookieValue(name = "refresh_token", required = false) String refreshToken) {
         log.info("Запрос на выход из системы");
-        log.debug("Токены для инвалидации - access: {}, refresh: {}", 
-                 accessToken != null ? "присутствует" : "отсутствует", 
+        log.debug("Токены для инвалидации - access: {}, refresh: {}",
+                 accessToken != null ? "присутствует" : "отсутствует",
                  refreshToken != null ? "присутствует" : "отсутствует");
-        
+
         ResponseEntity<LoginResponse> response = authService.logout(accessToken, refreshToken);
         log.info("Пользователь успешно вышел из системы");
-        
+
         return response;
     }
 
+    /**
+     * Возвращает информацию о текущем аутентифицированном пользователе.
+     * Доступно только аутентифицированным пользователям.
+     *
+     * @return информация о пользователе
+     */
     @Operation(summary = "Информация о пользователе", description = "Получение данных текущего аутентифицированного пользователя")
     @ApiResponse(responseCode = "200", description = "Данные пользователя")
     @ApiResponse(responseCode = "401", description = "Требуется аутентификация")
@@ -122,24 +154,31 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     * Изменяет пароль текущего пользователя.
+     * Доступно только аутентифицированным пользователям.
+     *
+     * @param request данные для смены пароля (старый, новый и подтверждение)
+     * @return результат операции смены пароля
+     */
     @Operation(summary = "Смена пароля", description = "Изменение пароля текущего пользователя")
     @PutMapping("/change_password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         log.info("Запрос на смену пароля");
-        
+
         if (!request.confirmPassword().equals(request.newPassword())) {
             log.warn("Смена пароля не удалась: пароли не совпадают");
             return ResponseEntity.badRequest().body("Пароли не совпадают");
         }
-        
+
         try {
             UserDto user = userService.getUserByUsername(authService.getUserLoggedInfo().username());
             if (user == null) {
                 log.warn("Смена пароля не удалась: пользователь не найден");
                 return ResponseEntity.badRequest().body("Пользователь не найден");
             }
-            
+
             if (passwordEncoder.matches(request.currentPassword(), user.password())) {
                 userService.updateUser(user.id(),
                         new UserDto(user.id(), user.username(),
@@ -147,10 +186,10 @@ public class AuthenticationController {
                 log.info("Пароль успешно изменен для пользователя: {}", user.username());
                 return ResponseEntity.ok("Пароль успешно изменен");
             }
-            
+
             log.warn("Смена пароля не удалась: неверный текущий пароль для пользователя: {}", user.username());
             return ResponseEntity.badRequest().body("Текущий пароль неверен");
-            
+
         } catch (Exception e) {
             log.error("Ошибка при смене пароля: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Ошибка при смене пароля: " + e.getMessage());

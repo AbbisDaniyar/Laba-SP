@@ -26,6 +26,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Интеграционные тесты для контроллера аутентификации.
+ * Проверяет работу REST-эндпоинтов контроллера аутентификации с использованием MockMvc.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class AuthenticationControllerIntegrationTest {
@@ -37,7 +41,7 @@ class AuthenticationControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; 
+    private PasswordEncoder passwordEncoder;
 
     @MockBean
     private AuthService authService;
@@ -45,11 +49,17 @@ class AuthenticationControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
+    /**
+     * Тестирует вход в систему с валидными учетными данными.
+     * Проверяет, что эндпоинт возвращает успешный ответ при корректном логине и пароле.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     void login_WithValidCredentials_ShouldReturnSuccess() throws Exception {
         LoginRequest loginRequest = new LoginRequest("testuser", "password");
         LoginResponse loginResponse = new LoginResponse(true, "ROLE_USER");
-        
+
         when(authService.login(any(), any(), any()))
                 .thenReturn(ResponseEntity.ok(loginResponse));
 
@@ -61,10 +71,16 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(jsonPath("$.roles").value("ROLE_USER"));
     }
 
+    /**
+     * Тестирует вход в систему с невалидными учетными данными.
+     * Проверяет, что эндпоинт возвращает ошибку при некорректном логине или пароле.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     void login_WithInvalidCredentials_ShouldReturnError() throws Exception {
         LoginRequest loginRequest = new LoginRequest("wronguser", "wrongpass");
-        
+
         when(authService.login(any(), any(), any()))
                 .thenReturn(ResponseEntity.badRequest().body(new LoginResponse(false, "")));
 
@@ -75,10 +91,16 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(jsonPath("$.isLogged").value(false));
     }
 
+    /**
+     * Тестирует обновление токена с валидным refresh токеном.
+     * Проверяет, что эндпоинт возвращает новый токен при наличии действительного refresh токена.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     void refresh_WithValidToken_ShouldReturnNewToken() throws Exception {
         LoginResponse loginResponse = new LoginResponse(true, "ROLE_USER");
-        
+
         when(authService.refresh(anyString()))
                 .thenReturn(ResponseEntity.ok(loginResponse));
 
@@ -88,11 +110,17 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    /**
+     * Тестирует получение информации о текущем пользователе при аутентификации.
+     * Проверяет, что эндпоинт возвращает корректную информацию о вошедшем пользователе.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(username = "testuser")
     void userLoggedInfo_WhenAuthenticated_ShouldReturnUserInfo() throws Exception {
         UserLoggedDto userInfo = new UserLoggedDto("testuser", "ROLE_USER", Set.of());
-        
+
         when(authService.getUserLoggedInfo()).thenReturn(userInfo);
 
         mockMvc.perform(get("/api/auth/info")
@@ -102,6 +130,12 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(jsonPath("$.role").value("ROLE_USER"));
     }
 
+    /**
+     * Тестирует изменение пароля с валидными данными.
+     * Проверяет, что эндпоинт успешно изменяет пароль при корректных данных.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(username = "testuser")
     void changePassword_WithValidData_ShouldChangePassword() throws Exception {
@@ -110,9 +144,9 @@ class AuthenticationControllerIntegrationTest {
                 "newPassword123",
                 "newPassword123"
         );
-        
+
         UserLoggedDto userInfo = new UserLoggedDto("testuser", "ROLE_USER", Set.of());
-        
+
         when(authService.getUserLoggedInfo()).thenReturn(userInfo);
 
         String encodedOldPassword = passwordEncoder.encode("oldPassword");
@@ -130,6 +164,12 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(content().string("Пароль успешно изменен"));
     }
 
+    /**
+     * Тестирует изменение пароля, когда новые пароли не совпадают.
+     * Проверяет, что эндпоинт возвращает ошибку при несовпадении новых паролей.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     @WithMockUser(username = "testuser")
     void changePassword_WhenPasswordsDontMatch_ShouldReturnError() throws Exception {
@@ -146,10 +186,16 @@ class AuthenticationControllerIntegrationTest {
                 .andExpect(content().string("Пароли не совпадают"));
     }
 
+    /**
+     * Тестирует выход из системы.
+     * Проверяет, что эндпоинт корректно очищает сессию и возвращает соответствующий ответ.
+     *
+     * @throws Exception Если возникла ошибка при выполнении теста
+     */
     @Test
     void logout_ShouldClearSession() throws Exception {
         LoginResponse logoutResponse = new LoginResponse(false, "");
-        
+
         when(authService.logout(any(), any()))
                 .thenReturn(ResponseEntity.ok(logoutResponse));
 

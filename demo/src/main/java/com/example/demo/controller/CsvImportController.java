@@ -15,6 +15,10 @@ import com.example.demo.service.CsvImportService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Контроллер для импорта данных инцидентов из CSV-файлов.
+ * Обрабатывает загрузку CSV-файлов и их последующую обработку для создания инцидентов.
+ */
 @RestController
 @RequestMapping("/api/alerts")
 @RequiredArgsConstructor
@@ -23,12 +27,19 @@ public class CsvImportController {
 
     private final CsvImportService csvImportService;
 
+    /**
+     * Импортирует инциденты из CSV-файла.
+     * Доступно пользователям с ролью ADMIN или MANAGER.
+     *
+     * @param file CSV-файл для импорта
+     * @return результат импорта с информацией об успешных и неудачных операциях
+     */
     @PostMapping(value = "/import-csv", consumes = "multipart/form-data")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<CsvImportResult> importCsv(@RequestParam("file") MultipartFile file) {
-        log.info("Запрос импорта CSV - имя файла: {}, размер: {} байт", 
+        log.info("Запрос импорта CSV - имя файла: {}, размер: {} байт",
                 file.getOriginalFilename(), file.getSize());
-        
+
         try {
             if (file.isEmpty()) {
                 log.warn("Импорт CSV не удался: файл пустой");
@@ -40,8 +51,8 @@ public class CsvImportController {
             }
 
             String contentType = file.getContentType();
-            if (contentType == null || 
-                (!contentType.equals("text/csv") && 
+            if (contentType == null ||
+                (!contentType.equals("text/csv") &&
                  !contentType.equals("application/vnd.ms-excel") &&
                  !file.getOriginalFilename().toLowerCase().endsWith(".csv"))) {
                 log.warn("Импорт CSV не удался: неверный тип файла - {}", contentType);
@@ -53,16 +64,16 @@ public class CsvImportController {
             }
 
             CsvImportResult result = csvImportService.importAlertsFromCsv(file);
-            
-            log.info("Импорт CSV завершен - успешно: {}, неудачно: {}, ошибок: {}", 
+
+            log.info("Импорт CSV завершен - успешно: {}, неудачно: {}, ошибок: {}",
                     result.getSuccessCount(), result.getFailedCount(), result.getErrors().size());
-            
+
             if (result.hasError()) {
                 log.warn("Импорт CSV завершен с ошибками: {}", result.getErrors());
             }
-            
+
             return ResponseEntity.ok(result);
-            
+
         } catch (Exception e) {
             log.error("Ошибка импорта CSV: {}", e.getMessage(), e);
             CsvImportResult errorResult = new CsvImportResult();

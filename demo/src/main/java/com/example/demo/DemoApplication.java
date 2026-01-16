@@ -16,55 +16,76 @@ import com.example.demo.repository.UserRepository;
 
 import java.util.List;
 
+/**
+ * Основной класс приложения Spring Boot.
+ * Этот класс является точкой входа в приложение и содержит метод main().
+ * Также обеспечивает инициализацию тестовых данных при запуске приложения.
+ */
 @SpringBootApplication
 public class DemoApplication {
     private static final Logger log = LoggerFactory.getLogger(DemoApplication.class);
 
+    /**
+     * Метод точки входа в приложение.
+     * Запускает Spring Boot приложение.
+     *
+     * @param args аргументы командной строки
+     */
     public static void main(String[] args) {
         log.info("Запуск приложения DemoApplication");
         SpringApplication.run(DemoApplication.class, args);
         log.info("Приложение DemoApplication успешно запущено");
     }
 
+    /**
+     * Инициализация начальных данных для приложения (роли и пользователи).
+     * Создает тестовые данные при запуске приложения, если они еще не существуют.
+     * Работает только в профиле, отличном от "test".
+     *
+     * @param userRepository репозиторий пользователей
+     * @param roleRepository репозиторий ролей
+     * @param passwordEncoder кодировщик паролей
+     * @return CommandLineRunner для выполнения инициализации
+     */
     @Bean
     @Profile("!test")
-    CommandLineRunner initData(UserRepository userRepository, 
+    CommandLineRunner initData(UserRepository userRepository,
                               RoleRepository roleRepository,
                               PasswordEncoder passwordEncoder) {
         return args -> {
             if (roleRepository.count() == 0) {
                 log.info("=== СОЗДАНИЕ ТЕСТОВЫХ ДАННЫХ ===");
-                
+
                 Role adminRole = new Role();
                 adminRole.setName("ADMIN");
-                
+
                 Role managerRole = new Role();
                 managerRole.setName("MANAGER");
-                
+
                 Role userRole = new Role();
                 userRole.setName("USER");
-                
+
                 List<Role> savedRoles = roleRepository.saveAll(List.of(adminRole, managerRole, userRole));
                 log.info("Создано ролей: {}", savedRoles.size());
-                
+
                 User admin = new User();
                 admin.setUsername("admin");
                 admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setRole(adminRole);
-                
+
                 User manager = new User();
                 manager.setUsername("manager");
                 manager.setPassword(passwordEncoder.encode("manager123"));
                 manager.setRole(managerRole);
-                
+
                 User user = new User();
                 user.setUsername("user");
                 user.setPassword(passwordEncoder.encode("user123"));
                 user.setRole(userRole);
-                
+
                 List<User> savedUsers = userRepository.saveAll(List.of(admin, manager, user));
                 log.info("Создано пользователей: {}", savedUsers.size());
-                
+
                 savedUsers.forEach(u -> {
                     log.info("Пользователь: {} | Роль: {}", u.getUsername(), u.getRole().getAuthority());
                 });

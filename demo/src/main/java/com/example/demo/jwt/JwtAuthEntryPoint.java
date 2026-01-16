@@ -19,15 +19,30 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Компонент для обработки случаев, когда аутентификация пользователя не удалась.
+ * Реализует интерфейс AuthenticationEntryPoint и возвращает 401 Unauthorized
+ * с подробной информацией об ошибке в формате JSON.
+ */
 @Component
 public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthEntryPoint.class);
-    
+
+    /**
+     * Метод вызывается, когда пользователь пытается получить доступ к защищенному ресурсу
+     * без правильной аутентификации. Возвращает 401 ответ с деталями ошибки.
+     *
+     * @param request HTTP запрос
+     * @param response HTTP ответ
+     * @param authException исключение аутентификации
+     * @throws IOException в случае ошибки ввода-вывода
+     * @throws ServletException в случае ошибки сервлета
+     */
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        log.warn("Требуется аутентификация для пути: {}, ошибка: {}", 
+        log.warn("Требуется аутентификация для пути: {}, ошибка: {}",
                 request.getServletPath(), authException.getMessage());
-        
+
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
 
@@ -39,7 +54,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
         body.put("details", request.getServletPath());
 
         log.debug("Возвращается ответ 401: {}", body);
-        
+
         final ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(response.getOutputStream(), body);
     }

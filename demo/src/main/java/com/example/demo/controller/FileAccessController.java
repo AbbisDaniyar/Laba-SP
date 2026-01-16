@@ -14,26 +14,36 @@ import org.springframework.web.bind.annotation.RestController;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Контроллер для предоставления доступа к загруженным файлам.
+ * Обрабатывает запросы на скачивание файлов из директории загрузок.
+ */
 @RestController
 public class FileAccessController {
     private static final Logger log = LoggerFactory.getLogger(FileAccessController.class);
 
-    private final String uploadDir = "uploads";
+    private final String uploadDir = "uploads"; // Директория для хранения загруженных файлов
 
+    /**
+     * Обрабатывает запрос на скачивание файла по имени файла.
+     *
+     * @param filename имя файла для скачивания
+     * @return ресурс файла для скачивания или 404, если файл не найден
+     */
     @GetMapping("/files/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         log.debug("Запрос скачивания файла: {}", filename);
-        
+
         try {
             Path file = Paths.get(uploadDir).resolve(filename);
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() || resource.isReadable()) {
-                log.info("Файл успешно предоставлен: {}, размер: {} байт", 
+                log.info("Файл успешно предоставлен: {}, размер: {} байт",
                         filename, resource.contentLength());
                 return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, 
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
             } else {

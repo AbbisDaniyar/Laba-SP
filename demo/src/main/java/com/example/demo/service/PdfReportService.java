@@ -37,68 +37,86 @@ import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Сервис для генерации PDF-отчетов по инцидентам.
+ * Предоставляет методы для создания различных типов отчетов (ежедневные, еженедельные, ежемесячные, пользовательские).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PdfReportService {
-    
+
     private final AlertRepository alertRepository;
-    
+
     private static final float HEADER_FONT_SIZE = 20f;
     private static final float SUBHEADER_FONT_SIZE = 14f;
     private static final float BODY_FONT_SIZE = 10f;
     private static final float SMALL_FONT_SIZE = 8f;
     private static final float MARGIN = 50f;
-    
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = 
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
         DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss", new Locale("ru"));
-    private static final DateTimeFormatter DATE_FORMATTER = 
+    private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("dd.MM.yyyy", new Locale("ru"));
     
+    /**
+     * Генерирует ежедневный отчет по инцидентам за указанный период.
+     *
+     * @param startDate Начальная дата периода
+     * @param endDate Конечная дата периода
+     * @return Массив байтов PDF-документа с ежедневным отчетом
+     */
     public byte[] generateDailyReport(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Генерация ежедневного отчета за период: {} - {}", startDate, endDate);
-        
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             List<Alert> alerts = alertRepository.findByTimestampBetween(startDate, endDate);
-            
+
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = initDocument(pdfDoc);
-            
+
             PdfFont russianFont = getRussianFont();
-            
+
             addHeader(document, "ЕЖЕДНЕВНЫЙ ОТЧЕТ ПО ИНЦИДЕНТАМ", russianFont);
             addReportPeriod(document, startDate, endDate, russianFont);
-            
+
             addStatisticsSection(document, alerts, startDate, endDate, russianFont);
-            
+
             if (!alerts.isEmpty()) {
                 addAlertsTable(document, alerts, "Детализация инцидентов за день", russianFont);
             } else {
                 addNoDataMessage(document, russianFont);
             }
-            
+
             addEventTypeStatistics(document, alerts, russianFont);
-            
+
             addFooter(document, russianFont);
-            
+
             document.close();
             pdfDoc.close();
             log.info("Ежедневный отчет успешно сгенерирован, количество инцидентов: {}", alerts.size());
             return baos.toByteArray();
-            
+
         } catch (Exception e) {
             log.error("Ошибка генерации ежедневного отчета", e);
             throw new ReportGenerationException("Ошибка генерации отчета", e);
         }
     }
-    
+
+    /**
+     * Генерирует еженедельный отчет по инцидентам за указанный период.
+     *
+     * @param startDate Начальная дата периода
+     * @param endDate Конечная дата периода
+     * @return Массив байтов PDF-документа с еженедельным отчетом
+     */
     public byte[] generateWeeklyReport(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Генерация еженедельного отчета за период: {} - {}", startDate, endDate);
-        
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             List<Alert> alerts = alertRepository.findByTimestampBetween(startDate, endDate);
-            
+
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = initDocument(pdfDoc);
@@ -121,77 +139,90 @@ public class PdfReportService {
             } else {
                 addNoDataMessage(document, russianFont);
             }
-            
+
             addFooter(document, russianFont);
             document.close();
             pdfDoc.close();
-            
+
             log.info("Еженедельный отчет успешно сгенерирован, количество инцидентов: {}", alerts.size());
             return baos.toByteArray();
-            
+
         } catch (Exception e) {
             log.error("Ошибка генерации еженедельного отчета", e);
             throw new ReportGenerationException("Ошибка генерации отчета", e);
         }
     }
-    
+
+    /**
+     * Генерирует ежемесячный отчет по инцидентам за указанный период.
+     *
+     * @param startDate Начальная дата периода
+     * @param endDate Конечная дата периода
+     * @return Массив байтов PDF-документа с ежемесячным отчетом
+     */
     public byte[] generateMonthlyReport(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Генерация ежемесячного отчета за период: {} - {}", startDate, endDate);
-        
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             List<Alert> alerts = alertRepository.findByTimestampBetween(startDate, endDate);
-            
+
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = initDocument(pdfDoc);
-            
+
             PdfFont russianFont = getRussianFont();
-            
+
             addHeader(document, "ЕЖЕМЕСЯЧНЫЙ ОТЧЕТ ПО ИНЦИДЕНТАМ", russianFont);
             addReportPeriod(document, startDate, endDate, russianFont);
-            
+
             addStatisticsSection(document, alerts, startDate, endDate, russianFont);
-            
+
             addEventTypeStatistics(document, alerts, russianFont);
-            
+
             addTopBusesTable(document, alerts, russianFont);
-            
+
             if (!alerts.isEmpty()) {
                 List<Alert> criticalAlerts = alerts.stream()
                     .filter(a -> a.getStatus() != StatusType.RESOLVED)
                     .sorted(Comparator.comparing(Alert::getTimestamp).reversed())
                     .limit(30)
                     .collect(Collectors.toList());
-                
+
                 if (!criticalAlerts.isEmpty()) {
                     addAlertsTable(document, criticalAlerts, "Требуют внимания (не решены)", russianFont);
                 }
             }
 
             addRecommendationsSection(document, alerts, russianFont);
-            
+
             addFooter(document, russianFont);
             document.close();
             pdfDoc.close();
-            
+
             log.info("Ежемесячный отчет успешно сгенерирован, количество инцидентов: {}", alerts.size());
             return baos.toByteArray();
-            
+
         } catch (Exception e) {
             log.error("Ошибка генерации ежемесячного отчета", e);
             throw new ReportGenerationException("Ошибка генерации отчета", e);
         }
     }
-    
+
+    /**
+     * Генерирует пользовательский отчет по инцидентам с возможностью фильтрации.
+     *
+     * @param request Объект запроса с параметрами фильтрации и типом отчета
+     * @return Массив байтов PDF-документа с пользовательским отчетом
+     */
     public byte[] generateCustomReport(ReportRequest request) {
         log.info("Генерация пользовательского отчета типа: {}", request.getReportType());
-        
+
         LocalDateTime startDate = request.getStartDate();
         LocalDateTime endDate = request.getEndDate();
-        
+
         if (startDate == null) startDate = LocalDateTime.now().minusDays(30);
         if (endDate == null) endDate = LocalDateTime.now();
-        
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             List<Alert> alerts = alertRepository.findByTimestampBetween(startDate, endDate);
 
@@ -200,13 +231,13 @@ public class PdfReportService {
                     .filter(a -> request.getBusIds().contains(a.getBusId()))
                     .collect(Collectors.toList());
             }
-            
+
             if (request.getStatuses() != null && !request.getStatuses().isEmpty()) {
                 alerts = alerts.stream()
                     .filter(a -> request.getStatuses().contains(a.getStatus().name()))
                     .collect(Collectors.toList());
             }
-            
+
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = initDocument(pdfDoc);
@@ -226,7 +257,7 @@ public class PdfReportService {
             addReportPeriod(document, startDate, endDate, russianFont);
 
             if (request.getBusIds() != null && !request.getBusIds().isEmpty()) {
-                Paragraph filterInfo = createRussianParagraph("Фильтр по автобусам: " + 
+                Paragraph filterInfo = createRussianParagraph("Фильтр по автобусам: " +
                     request.getBusIds().stream()
                         .map(String::valueOf)
                         .collect(Collectors.joining(", ")), russianFont)
@@ -234,15 +265,15 @@ public class PdfReportService {
                     .setFontColor(ColorConstants.GRAY);
                 document.add(filterInfo);
             }
-            
+
             if (request.getStatuses() != null && !request.getStatuses().isEmpty()) {
-                Paragraph statusInfo = createRussianParagraph("Фильтр по статусам: " + 
+                Paragraph statusInfo = createRussianParagraph("Фильтр по статусам: " +
                     String.join(", ", request.getStatuses()), russianFont)
                     .setFontSize(SMALL_FONT_SIZE)
                     .setFontColor(ColorConstants.GRAY);
                 document.add(statusInfo);
             }
-            
+
             document.add(createRussianParagraph("\n", russianFont));
 
             addStatisticsSection(document, alerts, startDate, endDate, russianFont);
@@ -252,48 +283,53 @@ public class PdfReportService {
             } else {
                 addNoDataMessage(document, russianFont);
             }
-            
+
             addFooter(document, russianFont);
             document.close();
             pdfDoc.close();
-            
+
             log.info("Пользовательский отчет успешно сгенерирован, количество инцидентов: {}", alerts.size());
             return baos.toByteArray();
-            
+
         } catch (Exception e) {
             log.error("Ошибка генерации пользовательского отчета", e);
             throw new ReportGenerationException("Ошибка генерации отчета", e);
         }
     }
-    
+
+    /**
+     * Генерирует тестовый отчет для демонстрации функциональности системы.
+     *
+     * @return Массив байтов PDF-документа с тестовым отчетом
+     */
     public byte[] generateTestReport() {
         log.info("Генерация тестового отчета");
-        
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             List<Alert> alerts = alertRepository.findAll();
-            
+
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = initDocument(pdfDoc);
 
             PdfFont russianFont = getRussianFont();
-            
+
             addHeader(document, "ТЕСТОВЫЙ ОТЧЕТ СИСТЕМЫ", russianFont);
-            
+
             String reportInfo = String.format(
                 "Это тестовый отчет системы мониторинга инцидентов.%n" +
                 "Отчет демонстрирует возможности генерации PDF документов.%n" +
                 "Дата генерации: %s%n",
                 LocalDateTime.now().format(DATE_TIME_FORMATTER)
             );
-            
+
             Paragraph info = createRussianParagraph(reportInfo, russianFont)
                 .setTextAlignment(TextAlignment.CENTER)
                 .setFontSize(BODY_FONT_SIZE);
             document.add(info);
-            
+
             document.add(createRussianParagraph("\n", russianFont));
-            
+
             if (!alerts.isEmpty()) {
                 String statsText = String.format(
                     "Всего инцидентов в системе: %d%n" +
@@ -306,16 +342,16 @@ public class PdfReportService {
                     countByStatus(alerts, StatusType.IN_PROGRESS),
                     countByStatus(alerts, StatusType.RESOLVED)
                 );
-                
+
                 Paragraph stats = createRussianParagraph(statsText, russianFont)
                     .setFontSize(BODY_FONT_SIZE);
-                
+
                 document.add(stats);
-                
+
                 document.add(createRussianParagraph("\nПример данных (первые 5 записей):", russianFont)
                     .setBold()
                     .setFontSize(SUBHEADER_FONT_SIZE));
-                
+
                 Table sampleTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 3, 2}))
                     .useAllAvailableWidth()
                     .setMarginTop(10)
@@ -332,7 +368,7 @@ public class PdfReportService {
                     sampleTable.addCell(createCell(translateEventType(alert.getType()), russianFont));
                     sampleTable.addCell(createStatusCell(alert.getStatus(), russianFont));
                 });
-                
+
                 document.add(sampleTable);
             } else {
                 document.add(createRussianParagraph("В системе нет инцидентов.", russianFont)
@@ -340,32 +376,39 @@ public class PdfReportService {
                     .setFontSize(BODY_FONT_SIZE)
                     .setFontColor(ColorConstants.GRAY));
             }
-            
+
             addFooter(document, russianFont);
             document.close();
             pdfDoc.close();
-            
+
             log.info("Тестовый отчет успешно сгенерирован");
             return baos.toByteArray();
-            
+
         } catch (Exception e) {
             log.error("Ошибка генерации тестового отчета", e);
             throw new ReportGenerationException("Ошибка генерации тестового отчета", e);
         }
     }
-    
+
+    /**
+     * Получает статистику по инцидентам за указанный период.
+     *
+     * @param startDate Начальная дата периода
+     * @param endDate Конечная дата периода
+     * @return Карта с различными метриками статистики
+     */
     public Map<String, Object> getReportStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         List<Alert> alerts = alertRepository.findByTimestampBetween(startDate, endDate);
-        
+
         Map<EventType, Long> byEventType = alerts.stream()
             .collect(Collectors.groupingBy(Alert::getType, Collectors.counting()));
-        
+
         Map<StatusType, Long> byStatus = alerts.stream()
             .collect(Collectors.groupingBy(Alert::getStatus, Collectors.counting()));
-        
+
         Map<Long, Long> byBus = alerts.stream()
             .collect(Collectors.groupingBy(Alert::getBusId, Collectors.counting()));
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("totalAlerts", alerts.size());
         result.put("startDate", startDate.format(DATE_FORMATTER));
@@ -377,7 +420,7 @@ public class PdfReportService {
         result.put("inProgressCount", countByStatus(alerts, StatusType.IN_PROGRESS));
         result.put("resolvedCount", countByStatus(alerts, StatusType.RESOLVED));
         result.put("generationTime", LocalDateTime.now().format(DATE_TIME_FORMATTER));
-        
+
         return result;
     }
 

@@ -12,32 +12,58 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Глобальный обработчик исключений для приложения.
+ * Перехватывает и обрабатывает различные типы исключений,
+ * возникающих в контроллерах, и возвращает соответствующие HTTP ответы.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /**
+     * Обрабатывает исключение BusNotFoundException.
+     * Возвращает 404 статус и сообщение об ошибке.
+     *
+     * @param ex исключение BusNotFoundException
+     * @return ResponseEntity с сообщением об ошибке и статусом 404
+     */
     @ExceptionHandler(BusNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleBusNotFound(BusNotFoundException ex) {
         log.warn("Автобус не найден: {}", ex.getMessage());
-        
+
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    /**
+     * Обрабатывает исключение AlertNotFoundException.
+     * Возвращает 404 статус и сообщение об ошибке.
+     *
+     * @param ex исключение AlertNotFoundException
+     * @return ResponseEntity с сообщением об ошибке и статусом 404
+     */
     @ExceptionHandler(AlertNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleAlertNotFound(AlertNotFoundException ex) {
         log.warn("Инцидент не найден: {}", ex.getMessage());
-        
+
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    /**
+     * Обрабатывает исключения валидации (MethodArgumentNotValidException).
+     * Возвращает 400 статус и список ошибок валидации.
+     *
+     * @param ex исключение MethodArgumentNotValidException
+     * @return ResponseEntity со списком ошибок валидации и статусом 400
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         log.warn("Ошибки валидации при обработке запроса");
-        
+
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -48,10 +74,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    /**
+     * Обрабатывает общие исключения (Exception).
+     * Возвращает 500 статус и сообщение об ошибке.
+     *
+     * @param ex любое другое исключение
+     * @return ResponseEntity с сообщением об общей ошибке и статусом 500
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
         log.error("Непредвиденная ошибка: {}", ex.getMessage(), ex);
-        
+
         Map<String, String> error = new HashMap<>();
         error.put("error", "Внутренняя ошибка сервера");
         error.put("message", ex.getMessage());
