@@ -89,3 +89,4 @@ application-*.properties
 !README*.txt
 !LICENSE*.txt
 !CHANGELOG*.txt
+docker-compose.yml
