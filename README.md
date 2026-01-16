@@ -1,163 +1,225 @@
-Простой проект Spring Boot для управления чрезвычайными ситуациями с Docker и PostgreSQL.
-🚀 Быстрый старт
-1. Клонирование проекта
+# Emergency Management System
 
-git clone <ваш-репозиторий>
+Простой Spring Boot проект для управления чрезвычайными ситуациями с Docker, PostgreSQL и Telegram ботом.
+
+## 🚀 Быстрый старт за 5 минут
+
+### 1. Клонирование проекта
+```bash
+git clone https://github.com/AbbisDaniyar/Laba-SP.git
 cd Laba-SP
+```
 
-2. Настройка конфигурации
-
-# Копируем примеры конфигурационных файлов
+### 2. Создание конфигурационных файлов
+```bash
+# Основные файлы конфигурации (из примеров)
 cp .env.example .env
+cp docker-compose.yml.example docker-compose.yml
+
+# Конфигурация Spring Boot приложения
 cd demo
 cp src/main/resources/application.yml.example src/main/resources/application.yml
 cp src/main/resources/application-docker.yml.example src/main/resources/application-docker.yml
+cd ..
+```
 
-3. Редактирование .env файла
+### 3. Настройка переменных окружения
+Отредактируйте `.env` файл:
+```bash
+nano .env
+```
 
-Откройте файл .env и установите свои значения:
+**Обязательные настройки:**
+```bash
+POSTGRES_PASSWORD=ваш_надежный_пароль
+JWT_SECRET=$(./generate-secrets.sh)  # запустите скрипт для генерации
+```
 
-POSTGRES_PASSWORD=ваш_пароль_для_postgres
-JWT_SECRET=сгенерируйте_32_символа_рандомных
+**Опциональные настройки (Telegram бот):**
+```bash
 TELEGRAM_BOT_TOKEN=ваш_токен_бота
 TELEGRAM_CHAT_ID=ваш_chat_id
+```
 
-4. Запуск проекта
+### 4. Генерация JWT секрета
+```bash
+./generate-secrets.sh
+# Скрипт сгенерирует JWT_SECRET и добавит его в .env файл
+```
 
-# Вернуться в корневую папку и запустить
-cd ..
+### 5. Запуск проекта
+```bash
 docker-compose up --build -d
+```
 
-5. Проверка работы
+### 6. Проверка работоспособности
+```bash
+# Проверить статус контейнеров
+docker-compose ps
 
-    Приложение: http://localhost:8080
+# Просмотреть логи
+docker-compose logs -f app
 
-    База данных: localhost:5432 (логин: postgres, пароль из .env)
+# Проверить health приложения
+curl http://localhost:8080/actuator/health
+```
 
-📁 Файлы конфигурации
-application.yml (основная конфигурация)
+## 🌐 Доступ к сервисам
 
-Создайте файл demo/src/main/resources/application.yml:
+- **Веб-приложение**: http://localhost:8080
+- **База данных**: localhost:5432 (логин: `postgres`, пароль из `.env`)
+- **Логи приложения**: `docker-compose logs -f app`
+- **Логи базы данных**: `docker-compose logs -f postgres`
 
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/emergency_db
-    username: postgres
-    password: ${POSTGRES_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+## 🛠 Основные команды
 
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 900000
-  refresh-expiration: 604800000
+### Docker Compose
+```bash
+# Запуск
+docker-compose up -d
 
-telegram:
-  bot:
-    token: ${TELEGRAM_BOT_TOKEN}
-    chat-id: ${TELEGRAM_CHAT_ID}
-
-file:
-  upload-dir: uploads/
-
-application-docker.yml (для Docker)
-
-Создайте файл demo/src/main/resources/application-docker.yml:
-
-spring:
-  datasource:
-    url: jdbc:postgresql://postgres:5432/emergency_db
-    username: postgres
-    password: ${POSTGRES_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-
-server:
-  port: 8080
-
-logging:
-  file:
-    name: logs/application.log
-
-🐳 Docker команды
-Основные команды
-
-# Сборка и запуск
+# Пересборка и запуск
 docker-compose up --build -d
 
 # Остановка
 docker-compose down
+
+# Остановка с удалением данных
+docker-compose down -v
 
 # Просмотр логов
 docker-compose logs -f app
 
 # Перезапуск
 docker-compose restart app
+```
 
-# Очистка (всех данных!)
-docker-compose down -v
-
-Проверка состояния
-
-# Статус контейнеров
-docker-compose ps
-
-# Health check
-curl http://localhost:8080/actuator/health
-
-# Проверить базу данных
-docker-compose exec postgres psql -U postgres -d emergency_db -c "\l"
-
-💻 Локальная разработка
-Требования
-
-    Java 17
-
-    Maven
-
-    PostgreSQL 15
-
-Запуск без Docker
-
+### Разработка
+```bash
+# Локальный запуск (без Docker)
 cd demo
 ./mvnw spring-boot:run
-
-Тестирование
-
-# Запуск тестов
-./mvnw test
 
 # Сборка проекта
 ./mvnw clean package
 
-🔧 Устранение проблем
-1. Ошибка подключения к БД
+# Тестирование
+./mvnw test
+```
 
-# Проверить работает ли PostgreSQL
+## 📁 Структура файлов
+
+### Файлы в репозитории (шаблоны)
+```
+📄 .env.example              # Пример переменных окружения
+📄 docker-compose.yml.example # Пример Docker Compose конфигурации
+📄 README.md                 # Эта документация
+📄 generate-secrets.sh       # Скрипт генерации JWT секрета
+```
+
+### Локальные файлы (создаются пользователем)
+```
+📄 .env                     # Реальные переменные окружения (НЕ в git)
+📄 docker-compose.yml       # Реальная Docker конфигурация (НЕ в git)
+```
+
+### Spring Boot конфигурации
+```
+demo/src/main/resources/
+├── application.yml           # Основная конфигурация
+├── application-docker.yml    # Конфигурация для Docker
+└── application.yml.example   # Пример конфигурации
+```
+
+## ⚙️ Конфигурация
+
+### База данных (PostgreSQL)
+```yaml
+# В docker-compose.yml
+POSTGRES_DB: emergencydb
+POSTGRES_USER: postgres
+POSTGRES_PASSWORD: ваш_пароль  # из .env
+```
+
+### Spring Boot приложение
+```yaml
+# В application.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/emergencydb
+    username: postgres
+    password: ${POSTGRES_PASSWORD}
+```
+
+### JWT аутентификация
+```yaml
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 900000        # 15 минут
+  refresh-expiration: 604800000  # 7 дней
+```
+
+## 🔐 Безопасность
+
+### Файлы, которые НЕЛЬЗЯ добавлять в git:
+- `.env` - содержит пароли и секреты
+- `docker-compose.yml` - может содержать пароли
+
+### Генерация безопасных секретов
+Всегда используйте скрипт для генерации JWT секрета:
+```bash
+./generate-secrets.sh
+```
+
+## 🐛 Устранение неполадок
+
+### 1. Ошибка подключения к базе данных
+```bash
+# Проверить статус PostgreSQL
+docker-compose ps postgres
+
+# Проверить логи
 docker-compose logs -f postgres
 
 # Перезапустить БД
 docker-compose restart postgres
+```
 
-2. Ошибка JWT
+### 2. Ошибка JWT аутентификации
+```bash
+# Проверить JWT_SECRET в .env
+grep JWT_SECRET .env
 
-Убедитесь, что в .env файле JWT_SECRET минимум 32 символа.
-3. Очистка проекта
+# Перегенерировать секрет
+./generate-secrets.sh
+```
 
-# Удалить все контейнеры и volumes
+### 3. Очистка проекта
+```bash
+# Полная очистка
 docker-compose down -v
 docker system prune -a
 
-# Пересобрать
+# Пересборка
 docker-compose up --build -d
+```
 
-📞 Быстрые ссылки
+### 4. Проверка портов
+Убедитесь что порты 8080 и 5432 свободны:
+```bash
+sudo lsof -i :8080
+sudo lsof -i :5432
+```
 
-    Веб-интерфейс: http://localhost:8080
+## 📝 Миграция данных
 
-    API документация: http://localhost:8080/swagger-ui.html
+### Резервное копирование базы данных
+```bash
+# Создать бекап
+docker-compose exec postgres pg_dump -U postgres emergencydb > backup.sql
 
-    Логи: docker-compose logs -f app
+# Восстановить из бекапа
+cat backup.sql | docker-compose exec -T postgres psql -U postgres emergencydb
+```
+
+*Проект разработан для лабораторных работ по системному программированию. Система управления чрезвычайными ситуациями в транспортной системе.*

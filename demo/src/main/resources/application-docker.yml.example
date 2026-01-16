@@ -1,12 +1,102 @@
+# Конфигурация для Docker окружения
+# Активируется при SPRING_PROFILES_ACTIVE=docker
+
 spring:
+  config:
+    activate:
+      on-profile: docker
+  
   datasource:
-    url: jdbc:postgresql://postgres:5432/emergencydb
-    username: postgres
-    password: postgres123
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB:emergencydb}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}  # из переменных окружения Docker
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+  
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:5MB}
+      max-request-size: ${MAX_FILE_SIZE:5MB}
+  
+  web:
+    resources:
+      static-locations: classpath:/static/,file:${FILE_UPLOAD_DIR:/uploads}/
+  
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
-  profiles:
-    active: docker
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+        jdbc:
+          batch_size: 20
+  
+  cache:
+    type: simple
+    cache-names: alerts,alertsByStatus,alertsByBus,alertsByUser,userDetails
+
+# JWT настройки
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  access-cookie-name: "access_token"
+  refresh-cookie-name: "refresh_token"
+
+# Логирование
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    org.hibernate.SQL: DEBUG
+    com.example.demo: ${LOGGING_LEVEL_COM_EXAMPLE_DEMO:DEBUG}
+    org.springframework.security: INFO
+    org.springframework.cache: TRACE
+  file:
+    name: /app/logs/application.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Загрузка файлов
+upload:
+  path: ${FILE_UPLOAD_DIR:/uploads}
+
+# Telegram бот
+telegram:
+  bot:
+    enabled: true
+    token: ${TELEGRAM_BOT_TOKEN}
+    chat-id: ${TELEGRAM_CHAT_ID}
+    bot-username: bus_alert_system_bot
+
+# Spring Boot Actuator для мониторинга
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Настройки сервера
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+
+# CORS настройки
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8080}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
