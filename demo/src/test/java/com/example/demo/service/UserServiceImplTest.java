@@ -243,11 +243,12 @@ class UserServiceImplTest {
      */
     @Test
     void deleteUser_WhenUserExists_ShouldDeleteUser() {
-        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         doNothing().when(userRepository).deleteById(1L);
 
         userService.deleteUser(1L);
 
+        verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).deleteById(1L);
     }
 
@@ -257,10 +258,11 @@ class UserServiceImplTest {
      */
     @Test
     void deleteUser_WhenUserNotExists_ShouldNotThrowException() {
-        when(userRepository.existsById(999L)).thenReturn(false);
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         userService.deleteUser(999L);
 
+        verify(userRepository, times(1)).findById(999L);
         verify(userRepository, never()).deleteById(anyLong());
     }
 

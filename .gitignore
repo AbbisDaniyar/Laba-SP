@@ -16,6 +16,7 @@ build.log
 # IDE
 .idea/
 .vscode/
+.uploads/
 *.iml
 
 # Build

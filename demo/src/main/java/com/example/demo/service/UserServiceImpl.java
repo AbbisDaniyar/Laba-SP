@@ -194,31 +194,15 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         log.info("Удаление пользователя: id={}", id);
 
-        try {
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> {
-                        log.warn("Пользователь не найден для удаления: id={}", id);
-                        return new RuntimeException("Пользователь не найден для удаления: " + id);
-                    });
-
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
             String username = user.getUsername();
             userRepository.deleteById(id);
-            evictUserCache(username);
             log.info("Пользователь успешно удален: id={}, username={}", id, username);
-        } catch (Exception e) {
-            log.error("Ошибка удаления пользователя: id={}, ошибка: {}", id, e.getMessage(), e);
-            throw e;
+        } else {
+            log.warn("Пользователь не найден для удаления: id={}", id);
         }
-    }
-
-    /**
-     * Инвалидирует кэш для пользователя по его имени.
-     *
-     * @param username Имя пользователя для инвалидации кэша
-     */
-    @CacheEvict(value = "userDetails", key = "#username")
-    public void evictUserCache(String username) {
-        // Метод для инвалидации кэша пользователя
     }
 
     /**
