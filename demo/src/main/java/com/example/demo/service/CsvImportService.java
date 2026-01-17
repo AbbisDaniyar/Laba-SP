@@ -40,10 +40,12 @@ public class CsvImportService {
      */
     private CSVFormat createCsvFormat() {
         return CSVFormat.DEFAULT.builder()
-                .setHeader()
+                .setHeader()  // Использует заголовки из файла
                 .setSkipHeaderRecord(true)
-                .setIgnoreHeaderCase(true)
+                .setIgnoreHeaderCase(true)  // Игнорирует регистр заголовков
+                .setIgnoreEmptyLines(true)  // Игнорирует пустые строки
                 .setTrim(true)
+                .setNullString("")  // Добавить: пустые значения как null
                 .build();
     }
 

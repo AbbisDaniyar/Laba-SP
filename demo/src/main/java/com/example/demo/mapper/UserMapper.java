@@ -22,7 +22,7 @@ public class UserMapper {
         return new UserDto(
                 user.getId(),
                 user.getUsername(),
-                null,
+                user.getPassword(),
                 user.getRole().getAuthority(),
                 Collections.emptySet()
         );

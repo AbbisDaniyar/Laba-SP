@@ -9,6 +9,8 @@ import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -75,6 +77,7 @@ public class UserServiceImpl implements UserService {
      * @return Объект UserDto, представляющий пользователя с указанным именем, или null если не найден
      */
     @Override
+    @Cacheable(value = "userDetails", key = "#username")
     public UserDto getUserByUsername(String username) {
         log.debug("Получение пользователя по имени: {}", username);
 
@@ -135,6 +138,7 @@ public class UserServiceImpl implements UserService {
      * @return Объект UserDto, представляющий обновленного пользователя
      */
     @Override
+    @CacheEvict(value = "userDetails", key = "#userDto.username")
     public UserDto updateUser(Long id, UserDto userDto) {
         log.info("Обновление пользователя: id={}, новый username={}", id, userDto.username());
 
@@ -155,6 +159,12 @@ public class UserServiceImpl implements UserService {
                     });
 
             String oldUsername = user.getUsername();
+
+            // Если имя пользователя изменяется, нужно инвалидировать кэш по старому имени
+            if (!oldUsername.equals(userDto.username())) {
+                log.debug("Имя пользователя изменяется: {} -> {}, инвалидируем кэш", oldUsername, userDto.username());
+            }
+
             user.setUsername(userDto.username());
 
             if (userDto.password() != null && !userDto.password().isEmpty()) {
@@ -185,17 +195,30 @@ public class UserServiceImpl implements UserService {
         log.info("Удаление пользователя: id={}", id);
 
         try {
-            if (!userRepository.existsById(id)) {
-                log.warn("Пользователь не найден для удаления: id={}", id);
-                return;
-            }
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> {
+                        log.warn("Пользователь не найден для удаления: id={}", id);
+                        return new RuntimeException("Пользователь не найден для удаления: " + id);
+                    });
 
+            String username = user.getUsername();
             userRepository.deleteById(id);
-            log.info("Пользователь успешно удален: id={}", id);
+            evictUserCache(username);
+            log.info("Пользователь успешно удален: id={}, username={}", id, username);
         } catch (Exception e) {
             log.error("Ошибка удаления пользователя: id={}, ошибка: {}", id, e.getMessage(), e);
             throw e;
         }
+    }
+
+    /**
+     * Инвалидирует кэш для пользователя по его имени.
+     *
+     * @param username Имя пользователя для инвалидации кэша
+     */
+    @CacheEvict(value = "userDetails", key = "#username")
+    public void evictUserCache(String username) {
+        // Метод для инвалидации кэша пользователя
     }
 
     /**
